@@ -1,8 +1,6 @@
 {
   description = "nixos-router";
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-  };
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
   outputs = inputs:
     let
       forAllSystems = f: inputs.nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ]

@@ -1,21 +1,23 @@
 { config, lib, pkgs, ... }:
 let
   mkDotDns = map (ip: "tls://${ip}");
-  googleDns = {
-    servers = mkDotDns [ "8.8.8.8" "8.8.4.4" "2001:4860:4860::8888" "2001:4860:4860::8844" ];
-    serverName = "dns.google";
-  };
-  cloudflareDns = {
-    servers = mkDotDns [ "1.1.1.1" "1.0.0.1" "2606:4700:4700::1111" "2606:4700:4700::1001" ];
-    serverName = "cloudflare-dns.com";
-  };
-  quad9Dns = {
-    servers = mkDotDns [ "9.9.9.9" "149.112.112.112" "2620:fe::fe" "2620:fe::9" ];
-    serverName = "dns.quad9.net";
-  };
-  quad9DnsWithECS = {
-    servers = mkDotDns [ "9.9.9.11" "149.112.112.11" "2620:fe::11" "2620:fe::fe:11" ];
-    serverName = "dns11.quad9.net";
+  upstreamDnsProvider = lib.getAttr config.router.upstreamDnsProvider {
+    google = {
+      servers = mkDotDns [ "8.8.8.8" "8.8.4.4" "2001:4860:4860::8888" "2001:4860:4860::8844" ];
+      serverName = "dns.google";
+    };
+    cloudflare = {
+      servers = mkDotDns [ "1.1.1.1" "1.0.0.1" "2606:4700:4700::1111" "2606:4700:4700::1001" ];
+      serverName = "cloudflare-dns.com";
+    };
+    quad9 = {
+      servers = mkDotDns [ "9.9.9.9" "149.112.112.112" "2620:fe::fe" "2620:fe::9" ];
+      serverName = "dns.quad9.net";
+    };
+    quad9_ecs = {
+      servers = mkDotDns [ "9.9.9.11" "149.112.112.11" "2620:fe::11" "2620:fe::fe:11" ];
+      serverName = "dns11.quad9.net";
+    };
   };
 in
 {
@@ -34,11 +36,8 @@ in
         hosts ${pkgs.stevenblack-blocklist}/hosts {
           fallthrough
         }
-        # unused: ${googleDns.serverName} ${toString googleDns.servers}
-        # unused: ${cloudflareDns.serverName} ${toString cloudflareDns.servers}
-        # unused: ${quad9Dns.serverName} ${toString quad9DnsWithECS.servers}
-        forward . ${toString quad9DnsWithECS.servers} {
-          tls_servername ${quad9DnsWithECS.serverName}
+        forward . ${toString upstreamDnsProvider.servers} {
+          tls_servername ${upstreamDnsProvider.serverName}
           policy random
           health_check 5s
         }

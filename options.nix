@@ -192,23 +192,29 @@ in
   # implemented in this module.
   options.networking.nftables.firewall = lib.filterAttrs (k: _: (lib.filter (e: k == e) [ "interfaces" ]) != [ ]) options.networking.firewall;
 
-  options.router.inventory = with lib; {
-    wan = mkOption {
-      type = types.str;
-      description = ''
-        The name of the WAN interface.
-      '';
+  options.router = with lib; {
+    upstreamDnsProvider = {
+      type = types.enum [ "google" "cloudflare" "quad9" "quad9_ecs" ];
+      default = "quad9_ecs";
     };
     v4Prefix = mkOption { type = types.str; };
     v6GuaPrefix = mkOption { type = types.str; };
     v6UlaPrefix = mkOption { type = types.str; };
     wireguardEndpoint = mkOption { type = types.str; };
-    networks = mkOption {
-      type = types.attrsOf (types.submodule networkType);
-      default = { };
-      description = ''
-        The networks to be configured by the router.
-      '';
+    inventory = {
+      wan = mkOption {
+        type = types.str;
+        description = ''
+          The name of the WAN interface.
+        '';
+      };
+      networks = mkOption {
+        type = types.attrsOf (types.submodule networkType);
+        default = { };
+        description = ''
+          The networks to be configured by the router.
+        '';
+      };
     };
   };
 
