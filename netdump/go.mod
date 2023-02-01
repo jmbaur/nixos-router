@@ -1,3 +1,3 @@
-module github.com/jmbaur/homelab/nixosModules/router/netdump
+module github.com/jmbaur/nixos-router/netdump
 
 go 1.19
