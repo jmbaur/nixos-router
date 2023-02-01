@@ -31,7 +31,7 @@ in
     enable = true;
     config = ''
       . {
-        hosts ${pkgs.stevenblack-hosts}/hosts {
+        hosts ${pkgs.stevenblack-blocklist}/hosts {
           fallthrough
         }
         # unused: ${googleDns.serverName} ${toString googleDns.servers}
