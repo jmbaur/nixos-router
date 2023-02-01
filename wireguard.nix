@@ -2,6 +2,7 @@
 let
   mkWgInterface = network:
     let
+      endpoint = config.router.inventory.wireguardEndpoint;
       routerPrivateKeyPath = network.wireguard.privateKeyPath;
       routerPublicKey = network.wireguard.publicKey;
       port = 51800 + network.id;
@@ -50,7 +51,7 @@ let
               };
               Peer = {
                 PublicKey = routerPublicKey;
-                Endpoint = "vpn.jmbaur.com:${toString port}";
+                Endpoint = "${endpoint}:${toString port}";
                 AllowedIPs = [
                   network._computed._networkIPv4Cidr
                   network._computed._networkGuaCidr
@@ -75,7 +76,7 @@ let
               };
               Peer = {
                 PublicKey = routerPublicKey;
-                Endpoint = "vpn.jmbaur.com:${toString port}";
+                Endpoint = "${endpoint}:${toString port}";
                 AllowedIPs = [ "0.0.0.0/0" "::/0" ];
               };
             };

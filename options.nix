@@ -202,6 +202,7 @@ in
     v4Prefix = mkOption { type = types.str; };
     v6GuaPrefix = mkOption { type = types.str; };
     v6UlaPrefix = mkOption { type = types.str; };
+    wireguardEndpoint = mkOption { type = types.str; };
     networks = mkOption {
       type = types.attrsOf (types.submodule networkType);
       default = { };
