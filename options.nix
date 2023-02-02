@@ -1,7 +1,7 @@
 { options, config, lib, pkgs, ... }:
 let
 
-  cfg = config.router.inventory;
+  cfg = config.router;
 
   routerHostName = config.networking.hostName;
 
@@ -182,18 +182,20 @@ let
             (config.name != network.name)
             && (lib.attrByPath [ config.name "includeRouteTo" ] false network.policy)
           ))
-          (builtins.attrValues cfg.networks));
+          (builtins.attrValues cfg.inventory.networks));
     };
   };
 
 in
 {
-  # duplicate `networking.firewall` options to be under nftables and
-  # implemented in this module.
-  options.networking.nftables.firewall = lib.filterAttrs (k: _: (lib.filter (e: k == e) [ "interfaces" ]) != [ ]) options.networking.firewall;
+  # duplicate `networking.firewall` options that are implemented in nftables in
+  # this module.
+  options.networking.nftables.firewall = {
+    inherit (options.networking.firewall) interfaces;
+  };
 
   options.router = with lib; {
-    upstreamDnsProvider = {
+    upstreamDnsProvider = mkOption {
       type = types.enum [ "google" "cloudflare" "quad9" "quad9_ecs" ];
       default = "quad9_ecs";
     };

@@ -1,8 +1,8 @@
 { config, lib, pkgs, ... }:
 let
+  endpoint = config.router.wireguardEndpoint;
   mkWgInterface = network:
     let
-      endpoint = config.router.inventory.wireguardEndpoint;
       routerPrivateKeyPath = network.wireguard.privateKeyPath;
       routerPublicKey = network.wireguard.publicKey;
       port = 51800 + network.id;
