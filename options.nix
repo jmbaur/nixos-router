@@ -282,9 +282,5 @@ in
         }
       )
     ];
-
-    environment.etc."inventory.json".source = (pkgs.formats.json { }).generate
-      "inventory.json"
-      cfg.inventory;
   };
 }

@@ -47,4 +47,8 @@
 
   networking.useDHCP = false;
   systemd.network.enable = true;
+
+  environment.etc."inventory.json".source = (pkgs.formats.json { }).generate
+    "inventory.json"
+    config.router.inventory;
 }
