@@ -16,7 +16,7 @@
           bogonNetworks = lib.mapAttrs (_: routes: map (route: route.routeConfig.Destination) routes) (
             builtins.partition
               (route: (builtins.match
-                "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
+                "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?"
                 route.routeConfig.Destination) != null
               )
               (networks.wan.routes ++
