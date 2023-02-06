@@ -3,7 +3,6 @@
     ./dhcp.nix
     ./dns.nix
     ./firewall.nix
-    ./he_tunnelbroker.nix
     ./lan.nix
     ./monitoring.nix
     ./options.nix
@@ -46,9 +45,6 @@
     '';
   };
 
-  networking = {
-    useDHCP = false;
-    useNetworkd = true;
-  };
+  networking.useDHCP = false;
   systemd.network.enable = true;
 }

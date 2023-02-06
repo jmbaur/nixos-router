@@ -6,19 +6,30 @@
       enable = true;
       ruleset = with config.systemd.network;
         let
+          heCfg = config.router.heTunnelBroker;
+          wan6IsHurricaneElectric = heCfg.enable;
+
           devWAN = networks.wan.name;
-          devWAN6 = networks.hurricane.name;
-          v4BogonNetworks = lib.concatMapStringsSep
-            ", "
-            (route: route.routeConfig.Destination)
-            (networks.wan.routes);
-          v6BogonNetworks = lib.concatMapStringsSep
-            ", "
-            (route: route.routeConfig.Destination)
-            (networks.hurricane.routes);
+          devWAN6 = if wan6IsHurricaneElectric then heCfg.name else devWAN;
+
+          # { right = [v4networks]; wrong = [v6networks]; }
+          bogonNetworks = lib.mapAttrs (_: routes: map (route: route.routeConfig.Destination) routes) (
+            builtins.partition
+              (route: (builtins.match
+                "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
+                route.routeConfig.Destination) != null
+              )
+              (networks.wan.routes ++
+                (lib.optionals config.router.heTunnelBroker.enable networks.hurricane.routes)
+              )
+          );
+          v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
+          v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
+
           lanIPv4Networks = lib.concatMapStringsSep ", "
             (network: network._computed._networkIPv4Cidr)
             (builtins.attrValues config.router.inventory.networks);
+
           wireguardPorts = lib.concatMapStringsSep ", " (netdev: toString netdev.wireguardConfig.ListenPort)
             (builtins.attrValues
               (lib.filterAttrs
@@ -86,7 +97,7 @@
                   (lib.optional (allowedUDPPorts != [ ]) "add rule inet firewall ${chain} meta l4proto udp th dport { ${lib.concatStringsSep ", " allowedUDPPorts} } accept") ++
                   [ "add rule inet firewall input iifname ${iface} jump ${chain}" ]
               )
-              config.networking.nftables.firewall.interfaces)))
+              config.router.firewall.interfaces)))
         + "\n" +
         # forwarding rules
         (lib.concatStringsSep "\n" (lib.flatten (map

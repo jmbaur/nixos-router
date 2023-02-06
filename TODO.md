@@ -1,2 +1,1 @@
-- don't hardcode the name of the wan interface name in
-  `config.router.inventory.network`
+- IPv6 Prefix Delegation on wan interface

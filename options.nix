@@ -1,6 +1,5 @@
 { options, config, lib, pkgs, ... }:
 let
-
   cfg = config.router;
 
   routerHostName = config.networking.hostName;
@@ -188,13 +187,8 @@ let
 
 in
 {
-  # duplicate `networking.firewall` options that are implemented in nftables in
-  # this module.
-  options.networking.nftables.firewall = {
-    inherit (options.networking.firewall) interfaces;
-  };
-
   options.router = with lib; {
+    enable = mkEnableOption "nixos router";
     upstreamDnsProvider = mkOption {
       type = types.enum [ "google" "cloudflare" "quad9" "quad9_ecs" ];
       default = "quad9_ecs";
@@ -203,13 +197,57 @@ in
     v6GuaPrefix = mkOption { type = types.str; };
     v6UlaPrefix = mkOption { type = types.str; };
     wireguardEndpoint = mkOption { type = types.str; };
-    inventory = {
-      wan = mkOption {
+    wan = mkOption {
+      type = types.str;
+      description = ''
+        The name of the WAN interface.
+      '';
+    };
+    heTunnelBroker = {
+      enable = mkEnableOption "Hurricane Electric TunnelBroker node";
+      name = mkOption {
         type = types.str;
+        default = "hurricane";
         description = ''
-          The name of the WAN interface.
+          The name of the SIT netdev.
         '';
       };
+      mtu = mkOption {
+        type = types.number;
+        default = 1480;
+        description = ''
+          The MTU of the SIT netdev.
+        '';
+      };
+      serverIPv4Address = mkOption {
+        type = types.str;
+        example = "192.0.2.1";
+        description = ''
+          The IPv4 address of the tunnel broker server.
+        '';
+      };
+      serverIPv6Address = mkOption {
+        type = types.str;
+        example = "2001:DB8::1";
+        description = ''
+          The IPv6 address of the tunnel broker server.
+        '';
+      };
+      clientIPv6Address = mkOption {
+        type = types.str;
+        example = "2001:DB8::2/64";
+        description = ''
+          The IPv6 address of the tunnel broker client with the network's
+          prefix. This option must include the network prefix.
+        '';
+      };
+    };
+    # duplicate `networking.firewall` options that are implemented in nftables in
+    # this module.
+    firewall = {
+      inherit (options.networking.firewall) interfaces;
+    };
+    inventory = {
       networks = mkOption {
         type = types.attrsOf (types.submodule networkType);
         default = { };
@@ -220,13 +258,13 @@ in
     };
   };
 
-  config = lib.mkIf (config.router.inventory != { }) {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         message = "Cannot have physical.enable and wireguard.enable set for the same network";
         assertion = (lib.filterAttrs
           (_: network: network.physical.enable && network.wireguard.enable)
-          config.router.inventory.networks) == { };
+          cfg.inventory.networks) == { };
       }
       (
         let
@@ -236,7 +274,7 @@ in
                 (host:
                   with host._computed; [ _ipv4 _ipv6.gua _ipv6.ula ])
                 (builtins.attrValues network.hosts))
-                (builtins.attrValues config.router.inventory.networks)));
+                (builtins.attrValues cfg.inventory.networks)));
         in
         {
           assertion = lib.length ips == lib.length (lib.unique ips);
@@ -247,6 +285,6 @@ in
 
     environment.etc."inventory.json".source = (pkgs.formats.json { }).generate
       "inventory.json"
-      config.router.inventory;
+      cfg.inventory;
   };
 }
