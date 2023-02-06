@@ -126,7 +126,9 @@ let
       config.router.inventory.networks);
 in
 {
-  systemd.network.netdevs = lib.mapAttrs (_: x: x.netdev) wireguardNetworks;
-  systemd.network.networks = lib.mapAttrs (_: x: x.network) wireguardNetworks;
-  environment.systemPackages = [ pkgs.wireguard-tools ] ++ (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs) wireguardNetworks));
+  config = lib.mkIf config.router.enable {
+    systemd.network.netdevs = lib.mapAttrs (_: x: x.netdev) wireguardNetworks;
+    systemd.network.networks = lib.mapAttrs (_: x: x.network) wireguardNetworks;
+    environment.systemPackages = [ pkgs.wireguard-tools ] ++ (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs) wireguardNetworks));
+  };
 }

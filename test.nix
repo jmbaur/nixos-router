@@ -4,6 +4,7 @@ nixosTest {
   nodes.router = { ... }: {
     imports = [ module ];
     router = {
+      enable = true;
       v4Prefix = "192.168.0.0/16";
       v6UlaPrefix = "fc00::/48";
       v6GuaPrefix = "2000::/48";

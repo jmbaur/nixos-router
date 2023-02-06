@@ -21,57 +21,59 @@ let
   };
 in
 {
-  networking.nameservers = [ "127.0.0.1" "::1" ];
-  services.resolved = {
-    enable = true;
-    extraConfig = ''
-      DNSStubListener=no
-    '';
-  };
+  config = lib.mkIf config.router.enable {
+    networking.nameservers = [ "127.0.0.1" "::1" ];
+    services.resolved = {
+      enable = true;
+      extraConfig = ''
+        DNSStubListener=no
+      '';
+    };
 
-  services.coredns = {
-    enable = true;
-    config = ''
-      . {
-        hosts ${pkgs.stevenblack-blocklist}/hosts {
-          fallthrough
-        }
-        forward . ${toString upstreamDnsProvider.servers} {
-          tls_servername ${upstreamDnsProvider.serverName}
-          policy random
-          health_check 5s
-        }
-        cache 30
-        errors {
-          consolidate 5m ".* i/o timeout$" warning
-          consolidate 30s "^Failed to .+"
-        }
-        prometheus :9153
-      }
-
-    '' + lib.concatMapStringsSep "\n"
-      (network:
-        let
-          allEntries = (lib.flatten (map
-            (host: [
-              "${host._computed._ipv4} ${host.name}.${network.domain}"
-              "${host._computed._ipv6.ula} ${host.name}.${network.domain}"
-            ])
-            (builtins.attrValues network.hosts)));
-          hostsFile = pkgs.writeText "${network.domain}.hosts" ''
-            ${lib.concatStringsSep "\n" allEntries}
-          '';
-        in
-        ''
-          ${network.domain} {
-            hosts ${hostsFile} {
-              reload 0 # the file is read-only, no need to dynamically reload it
-            }
-            any
-            errors
-            prometheus :9153
+    services.coredns = {
+      enable = true;
+      config = ''
+        . {
+          hosts ${pkgs.stevenblack-blocklist}/hosts {
+            fallthrough
           }
-        '')
-      (builtins.attrValues config.router.inventory.networks);
+          forward . ${toString upstreamDnsProvider.servers} {
+            tls_servername ${upstreamDnsProvider.serverName}
+            policy random
+            health_check 5s
+          }
+          cache 30
+          errors {
+            consolidate 5m ".* i/o timeout$" warning
+            consolidate 30s "^Failed to .+"
+          }
+          prometheus :9153
+        }
+
+      '' + lib.concatMapStringsSep "\n"
+        (network:
+          let
+            allEntries = (lib.flatten (map
+              (host: [
+                "${host._computed._ipv4} ${host.name}.${network.domain}"
+                "${host._computed._ipv6.ula} ${host.name}.${network.domain}"
+              ])
+              (builtins.attrValues network.hosts)));
+            hostsFile = pkgs.writeText "${network.domain}.hosts" ''
+              ${lib.concatStringsSep "\n" allEntries}
+            '';
+          in
+          ''
+            ${network.domain} {
+              hosts ${hostsFile} {
+                reload 0 # the file is read-only, no need to dynamically reload it
+              }
+              any
+              errors
+              prometheus :9153
+            }
+          '')
+        (builtins.attrValues config.router.inventory.networks);
+    };
   };
 }

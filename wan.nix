@@ -114,8 +114,10 @@ let
   };
 in
 {
-  systemd.network.networks = { inherit wan; } //
-    lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
+  config = lib.mkIf config.router.enable {
+    systemd.network.networks = { inherit wan; } //
+      lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
 
-  systemd.network.netdevs.hurricane = lib.mkIf wan6IsHurricaneElectric hurricaneNetdev;
+    systemd.network.netdevs.hurricane = lib.mkIf wan6IsHurricaneElectric hurricaneNetdev;
+  };
 }
