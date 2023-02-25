@@ -15,10 +15,6 @@
     services.avahi = {
       enable = false;
       openFirewall = false;
-      extraConfig = ''
-        [server]
-        deny-interfaces=${config.systemd.network.networks.wan.name}
-      '';
     };
 
     services.journald.rateLimitBurst = 5000;

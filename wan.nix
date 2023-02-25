@@ -119,5 +119,10 @@ in
       lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
 
     systemd.network.netdevs.hurricane = lib.mkIf wan6IsHurricaneElectric hurricaneNetdev;
+
+    services.avahi.denyInterfaces = [ config.systemd.network.networks.wan.name ]
+      ++ (lib.optional
+      wan6IsHurricaneElectric
+      config.systemd.network.networks.hurricane.name);
   };
 }

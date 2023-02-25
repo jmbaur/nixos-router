@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1675763311,
-        "narHash": "sha256-bz0Q2H3mxsF1CUfk26Sl9Uzi8/HFjGFD/moZHz1HebU=",
+        "lastModified": 1677063315,
+        "narHash": "sha256-qiB4ajTeAOVnVSAwCNEEkoybrAlA+cpeiBxLobHndE8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "fab09085df1b60d6a0870c8a89ce26d5a4a708c2",
+        "rev": "988cc958c57ce4350ec248d2d53087777f9e1949",
         "type": "github"
       },
       "original": {
@@ -15,9 +15,26 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-avahi-deny-interfaces": {
+      "locked": {
+        "lastModified": 1677346460,
+        "narHash": "sha256-0/1jcsKlEXs8yMU2/dpGb5g3MP1UV66qyYF1IvyyusI=",
+        "owner": "jmbaur",
+        "repo": "nixpkgs",
+        "rev": "63d01d75dbeb16e5230d639cc79701b62aff0a39",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jmbaur",
+        "ref": "avahi-daemon-deny-interfaces",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-avahi-deny-interfaces": "nixpkgs-avahi-deny-interfaces"
       }
     }
   },
