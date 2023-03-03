@@ -7,6 +7,7 @@ let
   netdump = pkgs.pkgsBuildBuild.buildGoModule {
     name = "netdump";
     src = ./netdump;
+    CGO_ENABLED = 0;
     vendorSha256 = null;
   };
 

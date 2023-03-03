@@ -1,5 +1,12 @@
 { config, lib, pkgs, ... }:
 let
+  wg-config-server = pkgs.buildGoModule {
+    name = "wg-config-server";
+    src = ./wg-config-server;
+    CGO_ENABLED = 0;
+    vendorSha256 = null;
+  };
+
   endpoint = config.router.wireguardEndpoint;
   mkWgInterface = network:
     let
@@ -136,6 +143,39 @@ in
   config = lib.mkIf config.router.enable {
     systemd.network.netdevs = lib.mapAttrs (_: x: x.netdev) wireguardNetworks;
     systemd.network.networks = lib.mapAttrs (_: x: x.network) wireguardNetworks;
-    environment.systemPackages = [ pkgs.wireguard-tools ] ++ (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs) wireguardNetworks));
+    environment.systemPackages = [ pkgs.wireguard-tools ];
+    # ++ (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs) wireguardNetworks));
+
+    systemd.services.wg-config-server = {
+      enable = true;
+      description = "wireguard config server (https://github.com/jmbaur/nixos-router/wg-config-server)";
+      serviceConfig = {
+        StateDirectory = "wg-config-server";
+        # LoadCredential = [ "password-file:${passwordFile}" "session-secret-file:${sessionSecretFile}" ];
+        ExecStart = lib.escapeShellArgs ([ "${wg-config-server}/bin/wg-config-server" ]);
+        CapabilityBoundingSet = [ ];
+        DeviceAllow = [ ];
+        DynamicUser = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        NoNewPrivileges = true;
+        PrivateDevices = true;
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectSystem = "strict";
+        RemoveIPC = true;
+        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" ];
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+      };
+      wantedBy = [ "multi-user.target" ];
+    };
   };
 }

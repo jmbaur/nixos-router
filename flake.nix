@@ -1,8 +1,10 @@
 {
   description = "nixos-router";
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
     nixpkgs-avahi-deny-interfaces.url = "github:jmbaur/nixpkgs/avahi-daemon-deny-interfaces";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
   outputs = inputs:
     let
@@ -23,9 +25,17 @@
       packages = forAllSystems ({ pkgs, ... }: {
         test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
       });
-      devShells = forAllSystems ({ pkgs, ... }: {
+      devShells = forAllSystems ({ pkgs, system, ... }: {
         default = pkgs.mkShell {
-          nativeBuildInputs = [ pkgs.go ];
+          inherit (inputs.pre-commit-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              nixpkgs-fmt.enable = true;
+              revive.enable = true;
+              gofmt.enable = true;
+            };
+          }) shellHook;
+          nativeBuildInputs = with pkgs; [ bashInteractive go ];
         };
       });
     };
