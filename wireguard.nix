@@ -95,6 +95,7 @@ let
             };
           in
           {
+            inherit (host) name;
             keyFile = host.privateKeyPath;
             configs = [ fullTunnelWgConfig splitTunnelWgConfig ];
           })
@@ -107,10 +108,14 @@ let
       (_: network: network.wireguard.enable)
       config.router.inventory.networks);
 
-  confDir = pkgs.runCommand "wg-conf-dir" { } ''
+  confDir = pkgs.runCommand "wg-conf-dir" { } (''
     mkdir -p $out
   '' + (
-    lib.concatMapStringsSep "\n" (drv: "cp ${drv} $out/${drv.name}") (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs.configs) wireguardNetworks))
+    lib.concatMapStrings
+      (drv: ''
+        cp ${drv} $out/${drv.name}
+      '')
+      (lib.flatten (lib.mapAttrsToList (_: n: (map (c: c.configs) n.clientConfigs)) wireguardNetworks)))
   );
 in
 {
