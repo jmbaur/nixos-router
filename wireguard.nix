@@ -45,15 +45,14 @@ let
       clientConfigs = lib.mapAttrsToList
         (_: host:
           let
-            scriptName = "wg-config-${host.name}";
-            splitTunnelWgConfig = lib.generators.toINI { listsAsDuplicateKeys = true; } {
+            splitTunnelWgConfig = (pkgs.formats.ini { listsAsDuplicateKeys = true; }).generate "${host.name}-split.conf" {
               Interface = {
                 Address = [
                   host._computed._ipv4Cidr
                   host._computed._ipv6.ulaCidr
                 ] ++ (lib.optional (config.router.v6GuaPrefix != null)
                   host._computed._ipv6.guaCidr);
-                PrivateKey = "$(cat ${host.privateKeyPath})";
+                PrivateKeyFile = host.privateKeyPath;
                 DNS = (([ network.hosts._router._computed._ipv4 network.hosts._router._computed._ipv6.ula ])) ++ [ network.domain "home.arpa" ];
               };
               Peer = {
@@ -78,14 +77,14 @@ let
                 );
               };
             };
-            fullTunnelWgConfig = lib.generators.toINI { listsAsDuplicateKeys = true; } {
+            fullTunnelWgConfig = (pkgs.formats.ini { listsAsDuplicateKeys = true; }).generate "${host.name}-full.conf" {
               Interface = {
                 Address = [
                   host._computed._ipv4Cidr
                   host._computed._ipv6.ulaCidr
                 ] ++ (lib.optional (config.router.v6GuaPrefix != null)
                   host._computed._ipv6.guaCidr);
-                PrivateKey = "$(cat ${host.privateKeyPath})";
+                PrivateKeyFile = host.privateKeyPath;
                 DNS = (([ network.hosts._router._computed._ipv4 network.hosts._router._computed._ipv6.ula ])) ++ [ network.domain "home.arpa" ];
               };
               Peer = {
@@ -95,41 +94,10 @@ let
               };
             };
           in
-          pkgs.writeShellScriptBin scriptName ''
-            set -eou pipefail
-            case "$1" in
-            text)
-            printf "%s\n" "####################################################################"
-            printf "%s\n" "# FULL TUNNEL"
-            cat << EOF
-            ${fullTunnelWgConfig}
-            EOF
-            printf "%s\n" "####################################################################"
-            printf "%s\n" "# SPLIT TUNNEL"
-            cat << EOF
-            ${splitTunnelWgConfig}
-            EOF
-            printf "%s\n" "####################################################################"
-            ;;
-            qrcode)
-            printf "%s\n" "####################################################################"
-            printf "%s\n" "# FULL TUNNEL"
-            ${pkgs.qrencode}/bin/qrencode -t ANSIUTF8 << EOF
-            ${fullTunnelWgConfig}
-            EOF
-            printf "%s\n" "####################################################################"
-            printf "%s\n" "# SPLIT TUNNEL"
-            ${pkgs.qrencode}/bin/qrencode -t ANSIUTF8 << EOF
-            ${splitTunnelWgConfig}
-            EOF
-            printf "%s\n" "####################################################################"
-            ;;
-            *)
-            echo Usage: "$0" type-of-config
-            echo   where type-of-config can be "text" or "qrcode"
-            ;;
-            esac
-          '')
+          {
+            keyFile = host.privateKeyPath;
+            configs = [ fullTunnelWgConfig splitTunnelWgConfig ];
+          })
         (lib.filterAttrs (name: _: name != "_router") network.hosts);
     };
 
@@ -138,21 +106,25 @@ let
     (lib.filterAttrs
       (_: network: network.wireguard.enable)
       config.router.inventory.networks);
+
+  confDir = pkgs.runCommand "wg-conf-dir" { } ''
+    mkdir -p $out
+  '' + (
+    lib.concatMapStringsSep "\n" (drv: "cp ${drv} $out/${drv.name}") (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs.configs) wireguardNetworks))
+  );
 in
 {
   config = lib.mkIf config.router.enable {
     systemd.network.netdevs = lib.mapAttrs (_: x: x.netdev) wireguardNetworks;
     systemd.network.networks = lib.mapAttrs (_: x: x.network) wireguardNetworks;
     environment.systemPackages = [ pkgs.wireguard-tools ];
-    # ++ (lib.flatten (lib.mapAttrsToList (_: x: x.clientConfigs) wireguardNetworks));
 
     systemd.services.wg-config-server = {
       enable = true;
       description = "wireguard config server (https://github.com/jmbaur/nixos-router/wg-config-server)";
       serviceConfig = {
         StateDirectory = "wg-config-server";
-        # LoadCredential = [ "password-file:${passwordFile}" "session-secret-file:${sessionSecretFile}" ];
-        ExecStart = lib.escapeShellArgs ([ "${wg-config-server}/bin/wg-config-server" ]);
+        ExecStart = lib.escapeShellArgs ([ "${wg-config-server}/bin/wg-config-server" "-conf-dir=${confDir}" ]);
         CapabilityBoundingSet = [ ];
         DeviceAllow = [ ];
         DynamicUser = true;
