@@ -79,8 +79,10 @@ func parseConfig(config string) (string, string, error) {
 
 	var parsedConfig, parsedPrivateKey string
 
-	var inInterfaceBlock bool
+	var seenInterfaceSection, pastPrivateKey bool
 	for {
+		var lineToPush string
+
 		line, err := r.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -90,12 +92,9 @@ func parseConfig(config string) (string, string, error) {
 			}
 		}
 
-		if !inInterfaceBlock {
-			if strings.HasPrefix(line, "[Interface]") {
-				inInterfaceBlock = true
-			}
-			parsedConfig += line
-		} else {
+		if !seenInterfaceSection && strings.HasPrefix(line, "[Interface]") {
+			lineToPush = "[Interface]\n"
+		} else if !pastPrivateKey && strings.HasPrefix(line, "PrivateKey") {
 			if strings.HasPrefix(line, "PrivateKey=") {
 				parsedPrivateKey = strings.TrimSpace(line[len("PrivateKey="):])
 			} else if strings.HasPrefix(line, "PrivateKeyFile=") {
@@ -107,8 +106,13 @@ func parseConfig(config string) (string, string, error) {
 				parsedPrivateKey = string(bytes.TrimSpace(data))
 			}
 
-			parsedConfig += fmt.Sprintf("PrivateKey=%s\n", parsedPrivateKey)
+			lineToPush = fmt.Sprintf("PrivateKey=%s\n", parsedPrivateKey)
+			pastPrivateKey = true
+		} else {
+			lineToPush = line
 		}
+
+		parsedConfig += lineToPush
 	}
 
 	if parsedConfig == "" || parsedPrivateKey == "" {

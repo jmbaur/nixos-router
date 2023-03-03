@@ -23,6 +23,18 @@ func TestParseConfig(t *testing.T) {
 			privKey: "foobar",
 			err:     nil,
 		},
+		{
+			config:  "[Interface]\nPrivateKey=foobar\n\n[Peer]AllowedIPs=::1\n",
+			parsed:  "[Interface]\nPrivateKey=foobar\n\n[Peer]AllowedIPs=::1\n",
+			privKey: "foobar",
+			err:     nil,
+		},
+		{
+			config:  "# some helpful comment\n[Interface]\nAddress=::1\nPrivateKey=foobar\n",
+			parsed:  "# some helpful comment\n[Interface]\nAddress=::1\nPrivateKey=foobar\n",
+			privKey: "foobar",
+			err:     nil,
+		},
 	}
 
 	for _, tc := range tt {
