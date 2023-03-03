@@ -117,7 +117,14 @@ in
   config = lib.mkIf config.router.enable {
     systemd.network.netdevs = lib.mapAttrs (_: x: x.netdev) wireguardNetworks;
     systemd.network.networks = lib.mapAttrs (_: x: x.network) wireguardNetworks;
+
     environment.systemPackages = [ pkgs.wireguard-tools ];
+
+    users.groups.wg-config-server = { };
+    users.users.wg-config-server = {
+      isSystemUser = true;
+      group = config.users.groups.wg-config-server.name;
+    };
 
     systemd.services.wg-config-server = {
       enable = true;
@@ -127,7 +134,8 @@ in
         ExecStart = lib.escapeShellArgs ([ "${wg-config-server}/bin/wg-config-server" "-conf-dir=${confDir}" ]);
         CapabilityBoundingSet = [ ];
         DeviceAllow = [ ];
-        DynamicUser = true;
+        User = config.users.users.wg-config-server.name;
+        Group = config.users.users.wg-config-server.group;
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         NoNewPrivileges = true;
