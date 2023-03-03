@@ -4,7 +4,10 @@
       enable = true;
       settings = {
         debug = { address = ":9430"; prometheus = true; };
-        interfaces = lib.mapAttrsToList
+        interfaces = (lib.optional config.router.wanSupportsDHCPv6 {
+          name = config.systemd.network.networks.wan.name;
+          monitor = true;
+        }) ++ lib.mapAttrsToList
           (name: network: {
             name = config.systemd.network.networks.${name}.name;
             advertise = true;

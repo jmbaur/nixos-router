@@ -4,7 +4,7 @@ let
 
   routerHostName = config.networking.hostName;
 
-  netdump = pkgs.buildGoModule {
+  netdump = pkgs.pkgsBuildBuild.buildGoModule {
     name = "netdump";
     src = ./netdump;
     vendorSha256 = null;
@@ -21,10 +21,10 @@ let
       _computed = {
         _ipv4 = mkOption { internal = true; type = types.str; };
         _ipv4Cidr = mkOption { internal = true; type = types.str; };
-        _ipv6.gua = mkOption { internal = true; type = types.str; };
-        _ipv6.guaCidr = mkOption { internal = true; type = types.str; };
         _ipv6.ula = mkOption { internal = true; type = types.str; };
         _ipv6.ulaCidr = mkOption { internal = true; type = types.str; };
+        _ipv6.gua = mkOption { internal = true; type = types.nullOr types.str; };
+        _ipv6.guaCidr = mkOption { internal = true; type = types.nullOr types.str; };
       };
     };
     config = {
@@ -33,8 +33,9 @@ let
           -host \
           -id=${toString config.id} \
           -v4-prefix=${networkConfig._computed._v4Prefix} \
-          -gua-prefix=${networkConfig._computed._v6GuaPrefix} \
-          -ula-prefix=${networkConfig._computed._v6UlaPrefix} > $out
+          -ula-prefix=${networkConfig._computed._v6UlaPrefix} \
+          ${lib.optionalString (networkConfig._computed._v6GuaPrefix != null) "-gua-prefix=${networkConfig._computed._v6GuaPrefix}"} \
+          | tee $out
       '');
     };
   };
@@ -149,18 +150,18 @@ let
       mtu = mkOption { type = types.nullOr types.int; default = null; };
       _computed = {
         _ipv4Cidr = mkOption { internal = true; type = types.int; };
-        _ipv6GuaCidr = mkOption { internal = true; type = types.int; };
         _ipv6UlaCidr = mkOption { internal = true; type = types.int; };
+        _ipv6GuaCidr = mkOption { internal = true; type = types.nullOr types.int; };
         _networkIPv4 = mkOption { internal = true; type = types.str; };
         _networkIPv4Cidr = mkOption { internal = true; type = types.str; };
         _networkIPv4SignificantOctets = mkOption { internal = true; type = types.str; };
         _dhcpv4Pool = mkOption { internal = true; type = types.str; };
-        _networkGuaCidr = mkOption { internal = true; type = types.str; };
         _networkUlaCidr = mkOption { internal = true; type = types.str; };
+        _networkGuaCidr = mkOption { internal = true; type = types.nullOr types.str; };
         _dhcpv6Pool = mkOption { internal = true; type = types.str; };
         _v4Prefix = mkOption { internal = true; type = types.str; default = config._computed._networkIPv4Cidr; };
-        _v6GuaPrefix = mkOption { internal = true; type = types.str; default = config._computed._networkGuaCidr; };
         _v6UlaPrefix = mkOption { internal = true; type = types.str; default = config._computed._networkUlaCidr; };
+        _v6GuaPrefix = mkOption { internal = true; type = types.nullOr types.str; default = config._computed._networkGuaCidr; };
       };
     };
 
@@ -170,8 +171,9 @@ let
           -network \
           -id=${toString config.id} \
           -v4-prefix=${cfg.v4Prefix} \
-          -gua-prefix=${cfg.v6GuaPrefix} \
-          -ula-prefix=${cfg.v6UlaPrefix} > $out
+          -ula-prefix=${cfg.v6UlaPrefix} \
+          ${lib.optionalString (cfg.v6GuaPrefix != null) "-gua-prefix=${cfg.v6GuaPrefix}"} \
+          | tee $out
       '');
       hosts._router = { id = 1; name = routerHostName; };
       includeRoutesTo = map
@@ -194,13 +196,28 @@ in
       default = "quad9_ecs";
     };
     v4Prefix = mkOption { type = types.str; };
-    v6GuaPrefix = mkOption { type = types.str; };
+    v6GuaPrefix = mkOption { type = types.nullOr types.str; default = null; };
     v6UlaPrefix = mkOption { type = types.str; };
     wireguardEndpoint = mkOption { type = types.str; };
     wan = mkOption {
       type = types.str;
       description = ''
         The name of the WAN interface.
+      '';
+    };
+    wanSupportsDHCPv6 = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Enable dhcpv6 on the wan interface.
+      '';
+    };
+    wan6PrefixHint = mkOption {
+      type = types.int;
+      default = 56;
+      description = ''
+        Prefix size that the DHVPv6 client will use to hint to the server for
+        prefix delegation.
       '';
     };
     heTunnelBroker = {
@@ -281,6 +298,10 @@ in
           message = "Duplicate IP addresses found";
         }
       )
+      {
+        assertion = ((cfg.v6GuaPrefix != null) != cfg.wanSupportsDHCPv6);
+        message = "Cannot set IPv6 GUA prefix and use DHCPv6 on the wan interface";
+      }
     ];
   };
 }

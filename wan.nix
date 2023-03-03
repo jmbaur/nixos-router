@@ -68,9 +68,9 @@ let
 
   wan = {
     name = config.router.wan;
-    DHCP = if wan6IsHurricaneElectric then "ipv4" else "yes";
+    DHCP = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "yes";
     networkConfig = {
-      LinkLocalAddressing = "no";
+      LinkLocalAddressing = if config.router.wanSupportsDHCPv6 then "yes" else "no";
       IPForward = true;
     } // (lib.optionalAttrs wan6IsHurricaneElectric {
       Tunnel = config.systemd.network.netdevs.hurricane.netdevConfig.Name;
@@ -80,7 +80,8 @@ let
       UseDNS = false;
       UseDomains = false;
     };
-    linkConfig.RequiredFamilyForOnline = if wan6IsHurricaneElectric then "ipv4" else "any";
+    dhcpV6Config.PrefixDelegationHint = "::/${config.router.wan6PrefixHint}";
+    linkConfig.RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     routes = map
       (Destination: {
         routeConfig = { inherit Destination; Type = "unreachable"; };
@@ -115,14 +116,16 @@ let
 in
 {
   config = lib.mkIf config.router.enable {
-    systemd.network.networks = { inherit wan; } //
-      lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
-
-    systemd.network.netdevs.hurricane = lib.mkIf wan6IsHurricaneElectric hurricaneNetdev;
-
     services.avahi.denyInterfaces = [ config.systemd.network.networks.wan.name ]
       ++ (lib.optional
       wan6IsHurricaneElectric
       config.systemd.network.networks.hurricane.name);
+
+    systemd.network.networks = { inherit wan; } //
+      lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
+
+    systemd.network.netdevs = lib.mkIf wan6IsHurricaneElectric {
+      hurricane = hurricaneNetdev;
+    };
   };
 }

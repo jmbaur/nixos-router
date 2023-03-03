@@ -20,9 +20,9 @@ let
               PublicKey = peer.publicKey;
               AllowedIPs = [
                 "${peer._computed._ipv4}/32"
-                "${peer._computed._ipv6.gua}/128"
                 "${peer._computed._ipv6.ula}/128"
-              ];
+              ] ++ (lib.optional (config.router.v6GuaPrefix != null)
+                "${peer._computed._ipv6.gua}/128");
             };
           })
           (lib.filterAttrs (name: _: name != "_router") network.hosts);
@@ -30,10 +30,10 @@ let
       network = {
         inherit (network) name;
         address = [
-          "${network.hosts._router._computed._ipv4Cidr}"
-          "${network.hosts._router._computed._ipv6.guaCidr}"
-          "${network.hosts._router._computed._ipv6.ulaCidr}"
-        ];
+          network.hosts._router._computed._ipv4Cidr
+          network.hosts._router._computed._ipv6.ulaCidr
+        ] ++ (lib.optional (config.router.v6GuaPrefix != null)
+          network.hosts._router._computed._ipv6.guaCidr);
       };
       clientConfigs = lib.mapAttrsToList
         (_: host:
@@ -42,10 +42,10 @@ let
             splitTunnelWgConfig = lib.generators.toINI { listsAsDuplicateKeys = true; } {
               Interface = {
                 Address = [
-                  "${host._computed._ipv4Cidr}"
-                  "${host._computed._ipv6.guaCidr}"
-                  "${host._computed._ipv6.ulaCidr}"
-                ];
+                  host._computed._ipv4Cidr
+                  host._computed._ipv6.ulaCidr
+                ] ++ (lib.optional (config.router.v6GuaPrefix != null)
+                  host._computed._ipv6.guaCidr);
                 PrivateKey = "$(cat ${host.privateKeyPath})";
                 DNS = (([ network.hosts._router._computed._ipv4 network.hosts._router._computed._ipv6.ula ])) ++ [ network.domain "home.arpa" ];
               };
@@ -54,12 +54,19 @@ let
                 Endpoint = "${endpoint}:${toString port}";
                 AllowedIPs = [
                   network._computed._networkIPv4Cidr
-                  network._computed._networkGuaCidr
                   network._computed._networkUlaCidr
-                ] ++
+                ]
+                ++
+                (lib.optional (config.router.v6GuaPrefix != null)
+                  network._computed._networkGuaCidr)
+                ++
                 lib.flatten (
                   map
-                    (name: with config.router.inventory.networks.${name}; [ _computed._networkIPv4Cidr _computed._networkGuaCidr _computed._networkUlaCidr ])
+                    (name: with config.router.inventory.networks.${name};
+                    ([ _computed._networkIPv4Cidr _computed._networkUlaCidr ]
+                      ++ (lib.optional
+                      (config.router.v6GuaPrefix != null)
+                      _computed._networkGuaCidr)))
                     network.includeRoutesTo
                 );
               };
@@ -67,10 +74,10 @@ let
             fullTunnelWgConfig = lib.generators.toINI { listsAsDuplicateKeys = true; } {
               Interface = {
                 Address = [
-                  "${host._computed._ipv4Cidr}"
-                  "${host._computed._ipv6.guaCidr}"
-                  "${host._computed._ipv6.ulaCidr}"
-                ];
+                  host._computed._ipv4Cidr
+                  host._computed._ipv6.ulaCidr
+                ] ++ (lib.optional (config.router.v6GuaPrefix != null)
+                  host._computed._ipv6.guaCidr);
                 PrivateKey = "$(cat ${host.privateKeyPath})";
                 DNS = (([ network.hosts._router._computed._ipv4 network.hosts._router._computed._ipv6.ula ])) ++ [ network.domain "home.arpa" ];
               };

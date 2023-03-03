@@ -7,16 +7,10 @@ nixosTest {
       enable = true;
       v4Prefix = "192.168.0.0/16";
       v6UlaPrefix = "fc00::/48";
-      v6GuaPrefix = "2000::/48";
       wireguardEndpoint = "vpn.example.com";
       wan = "wan";
-      heTunnelBroker = {
-        enable = true;
-        # TODO(jared): setup a GRE tunnel node to handle these
-        serverIPv4Address = "192.0.2.1";
-        serverIPv6Address = "2001:DB8::1";
-        clientIPv6Address = "2001:DB8::2/64";
-      };
+      wanSupportsDHCPv6 = true;
+      heTunnelBroker.enable = false;
       inventory.networks = {
         n1 = {
           id = 1;
