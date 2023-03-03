@@ -11,9 +11,9 @@
         networkConfig = {
           Address = [
             "${network.hosts._router._computed._ipv4Cidr}"
-            "${network.hosts._router._computed._ipv6.guaCidr}"
             "${network.hosts._router._computed._ipv6.ulaCidr}"
-          ];
+          ] ++ (lib.optional (config.router.v6GuaPrefix != null)
+            "${network.hosts._router._computed._ipv6.guaCidr}");
           IPv6AcceptRA = false;
         };
       })

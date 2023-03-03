@@ -20,15 +20,13 @@
           ./module.nix
         ];
       };
-      packages = forAllSystems
-        ({ pkgs, ... }: {
-          test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
-        });
-      devShells = forAllSystems
-        ({ pkgs, ... }: {
-          netdump = pkgs.mkShell {
-            nativeBuildInputs = [ pkgs.go ];
-          };
-        });
+      packages = forAllSystems ({ pkgs, ... }: {
+        test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
+      });
+      devShells = forAllSystems ({ pkgs, ... }: {
+        default = pkgs.mkShell {
+          nativeBuildInputs = [ pkgs.go ];
+        };
+      });
     };
 }
