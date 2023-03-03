@@ -80,7 +80,7 @@ let
       UseDNS = false;
       UseDomains = false;
     };
-    dhcpV6Config.PrefixDelegationHint = "::/${config.router.wan6PrefixHint}";
+    dhcpV6Config.PrefixDelegationHint = "::/${toString config.router.wan6PrefixHint}";
     linkConfig.RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     routes = map
       (Destination: {
