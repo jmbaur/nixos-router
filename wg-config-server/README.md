@@ -1,4 +1,4 @@
-# wireguard config server
+# Wireguard Config Server
 
 Expects to be called with a config directory of the following structure:
 
@@ -14,3 +14,7 @@ $ tree ./conf-dir
 
 where each file is a wireguard config of the name
 `"${hostname}-${configname}.conf"`.
+
+## Usage
+
+`curl -u _:<private_key> localhost:8080/<host>/<config_name>`
