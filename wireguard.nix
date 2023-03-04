@@ -129,7 +129,7 @@ in
       description = "wireguard config server (https://github.com/jmbaur/nixos-router/wg-config-server)";
       serviceConfig = {
         StateDirectory = "wg-config-server";
-        ExecStart = lib.escapeShellArgs ([ "${pkgs.wg-config-server}/bin/wg-config-server" "-conf-dir=${confDir}" ]);
+        ExecStart = lib.escapeShellArgs ([ "${pkgs.wg-config-server}/bin/wg-config-server" "-addr=[::]:8080" "-conf-dir=${confDir}" ]);
         CapabilityBoundingSet = [ ];
         DeviceAllow = [ ];
         User = config.users.users.wg-config-server.name;
