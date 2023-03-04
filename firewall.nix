@@ -59,6 +59,7 @@
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } icmpv6 type { destination-unreachable, echo-request, nd-neighbor-advert, nd-neighbor-solicit, nd-router-solicit, packet-too-big, parameter-problem, time-exceeded } accept
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto udp th dport { "bootps", "ntp", "dhcpv6-server" } accept
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto { tcp, udp } th dport "domain" accept
+            add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto tcp th dport 8080 accept
 
             # Reject traffic from addresses not found on the internet
             add chain inet firewall not_in_internet
