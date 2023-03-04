@@ -4,13 +4,6 @@ let
 
   routerHostName = config.networking.hostName;
 
-  netdump = pkgs.pkgsBuildBuild.buildGoModule {
-    name = "netdump";
-    src = ./netdump;
-    CGO_ENABLED = 0;
-    vendorSha256 = null;
-  };
-
   hostType = { name, config, networkConfig, ... }: {
     options = with lib; {
       id = mkOption { type = types.int; };
@@ -30,7 +23,7 @@ let
     };
     config = {
       _computed = lib.importJSON (pkgs.runCommand "hostdump-${name}.json" { } ''
-        ${netdump}/bin/netdump \
+        ${pkgs.pkgsBuildBuild.netdump}/bin/netdump \
           -host \
           -id=${toString config.id} \
           -v4-prefix=${networkConfig._computed._v4Prefix} \
@@ -168,7 +161,7 @@ let
 
     config = {
       _computed = lib.importJSON (pkgs.runCommand "netdump-${name}.json" { } ''
-        ${netdump}/bin/netdump \
+        ${pkgs.pkgsBuildBuild.netdump}/bin/netdump \
           -network \
           -id=${toString config.id} \
           -v4-prefix=${cfg.v4Prefix} \

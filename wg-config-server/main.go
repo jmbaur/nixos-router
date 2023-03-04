@@ -15,6 +15,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/skip2/go-qrcode"
 )
 
 var errInvalidConfig = errors.New("invalid config")
@@ -27,13 +29,20 @@ func noConfigsFound(w http.ResponseWriter) {
 func handler(configs map[string]map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		if len(path) != 2 {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "Not found")
+		if len(path) < 3 {
+			if len(path) == 2 {
+				w.Header().Set("Location", fmt.Sprintf("%s/text", r.URL.Path))
+				w.WriteHeader(http.StatusTemporaryRedirect)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprint(w, "Not found")
+			}
 			return
 		}
+
 		hostName := path[0]
 		configName := path[1]
+		configType := path[2]
 
 		_, privateKey, hasBasicAuth := r.BasicAuth()
 		if !hasBasicAuth {
@@ -70,7 +79,22 @@ func handler(configs map[string]map[string]string) func(w http.ResponseWriter, r
 			return
 		}
 
-		fmt.Fprintln(w, parsed)
+		var content string
+		if configType == "qrcode" {
+			png, err := qrcode.Encode(parsed, qrcode.Medium, 256)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "Failed to create qrcode")
+				return
+			}
+			content = string(png)
+			w.Header().Set("Content-Type", "image/png")
+		} else {
+			content = parsed
+			w.Header().Set("Content-Type", "text/plain")
+		}
+
+		fmt.Fprintln(w, content)
 	}
 }
 

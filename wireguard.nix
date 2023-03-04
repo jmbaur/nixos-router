@@ -1,12 +1,5 @@
 { config, lib, pkgs, ... }:
 let
-  wg-config-server = pkgs.buildGoModule {
-    name = "wg-config-server";
-    src = ./wg-config-server;
-    CGO_ENABLED = 0;
-    vendorSha256 = null;
-  };
-
   endpoint = config.router.wireguardEndpoint;
   mkWgInterface = network:
     let
@@ -136,7 +129,7 @@ in
       description = "wireguard config server (https://github.com/jmbaur/nixos-router/wg-config-server)";
       serviceConfig = {
         StateDirectory = "wg-config-server";
-        ExecStart = lib.escapeShellArgs ([ "${wg-config-server}/bin/wg-config-server" "-conf-dir=${confDir}" ]);
+        ExecStart = lib.escapeShellArgs ([ "${pkgs.wg-config-server}/bin/wg-config-server" "-conf-dir=${confDir}" ]);
         CapabilityBoundingSet = [ ];
         DeviceAllow = [ ];
         User = config.users.users.wg-config-server.name;
