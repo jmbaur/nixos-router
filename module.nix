@@ -17,23 +17,6 @@
       openFirewall = false;
     };
 
-    services.journald.rateLimitBurst = 5000;
-
-    services.openssh = {
-      enable = true;
-      openFirewall = false;
-    };
-
-    services.iperf3 = {
-      enable = true;
-      openFirewall = false;
-    };
-
-    services.atftpd.enable = true;
-    systemd.tmpfiles.rules = [
-      "L+ ${config.services.atftpd.root}/netboot.xyz.efi 644 root root - ${pkgs.netbootxyz-efi}"
-    ];
-
     services.ntp = {
       enable = true;
       # continue to serve time to the network in case internet access is lost
@@ -42,7 +25,7 @@
       '';
     };
 
-    networking.useDHCP = false;
+    networking.useDHCP = lib.mkForce false;
     systemd.network.enable = true;
 
     environment.etc."inventory.json".source = (pkgs.formats.json { }).generate
