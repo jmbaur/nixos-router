@@ -72,7 +72,7 @@
             add rule inet firewall output jump not_in_internet
 
             # Allow all wireguard traffic
-            add rule inet firewall input meta l4proto { udp } th dport { ${wireguardPorts} } accept
+            ${lib.optionalString (wireguardPorts != "") "add rule inet firewall input meta l4proto { udp } th dport { ${wireguardPorts} } accept"}
 
             # Allow limited icmp echo requests to wan interfaces
             add rule inet firewall input iifname . icmp type { ${devWAN} . echo-request } limit rate 5/second accept
