@@ -54,10 +54,7 @@ in
         (network:
           let
             allEntries = (lib.flatten (map
-              (host: [
-                "${host._computed._ipv4} ${host.name}.${network.domain}"
-                "${host._computed._ipv6.ula} ${host.name}.${network.domain}"
-              ])
+              (host: [ "${host._computed._ipv4} ${host.name}.${network.domain}" ])
               (builtins.attrValues network.hosts)));
             hostsFile = pkgs.writeText "${network.domain}.hosts" ''
               ${lib.concatStringsSep "\n" allEntries}
