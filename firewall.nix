@@ -57,7 +57,7 @@
             # Always allow input from LAN interfaces to access crucial router IP services
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } icmp type { destination-unreachable, echo-request, parameter-problem, time-exceeded } accept
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } icmpv6 type { destination-unreachable, echo-request, nd-neighbor-advert, nd-neighbor-solicit, nd-router-solicit, packet-too-big, parameter-problem, time-exceeded } accept
-            add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto udp th dport { "bootps", "ntp", "dhcpv6-server" } accept
+            add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto udp th dport { "bootps", "ntp" } accept
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto { tcp, udp } th dport "domain" accept
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } meta l4proto tcp th dport 8080 accept
 
