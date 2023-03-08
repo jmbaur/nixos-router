@@ -86,7 +86,14 @@
                     [ "add rule inet firewall input iifname ${iface} jump ${chain}" ]
                 )
                 config.router.firewall.interfaces)))
-          + "\n");
+          + "\n" + (
+            let
+              interface = config.systemd.network.networks.lan.name;
+            in
+            ''
+              add rule inet firewall forward iifname . oifname { ${interface} . ${devWAN}, ${interface} . ${devWAN6} } accept # allow the LAN to access the internet
+            ''
+          ));
       };
     };
   };
