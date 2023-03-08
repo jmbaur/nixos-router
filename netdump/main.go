@@ -150,11 +150,11 @@ func ipv6AddrFromMac(prefixStr, macStr string) (string, string, error) {
 	mac[0] ^= 0b10
 
 	ip := prefix.Addr().As16()
-	ip[8] = 0xff
-	ip[9] = 0xfe
-	ip[10] = mac[0]
-	ip[11] = mac[1]
-	ip[12] = mac[2]
+	ip[8] = mac[0]
+	ip[9] = mac[1]
+	ip[10] = mac[2]
+	ip[11] = 0xff
+	ip[12] = 0xfe
 	ip[13] = mac[3]
 	ip[14] = mac[4]
 	ip[15] = mac[5]

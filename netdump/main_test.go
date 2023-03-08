@@ -37,8 +37,8 @@ func TestGetHostDump(t *testing.T) {
 			want: &hostDump{
 				Ipv4:        "192.168.0.126",
 				Ipv4Cidr:    "192.168.0.126/24",
-				Ipv6Ula:     "fc00::fffe:200:0:0",
-				Ipv6UlaCidr: "fc00::fffe:200:0:0/64",
+				Ipv6Ula:     "fc00::200:ff:fe00:0",
+				Ipv6UlaCidr: "fc00::200:ff:fe00:0/64",
 			},
 		},
 		{
@@ -52,8 +52,8 @@ func TestGetHostDump(t *testing.T) {
 			want: &hostDump{
 				Ipv4:        "10.0.127.255",
 				Ipv4Cidr:    "10.0.127.255/8",
-				Ipv6Ula:     "fc00::fffe:200:0:0",
-				Ipv6UlaCidr: "fc00::fffe:200:0:0/64",
+				Ipv6Ula:     "fc00::200:ff:fe00:0",
+				Ipv6UlaCidr: "fc00::200:ff:fe00:0/64",
 			},
 		},
 	}
