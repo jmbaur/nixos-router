@@ -26,15 +26,6 @@
             vendorSha256 = null;
           })
           { };
-        wg-config-server = prev.callPackage
-          ({ lib, buildGoModule, ... }: buildGoModule {
-            name = "wg-config-server";
-            src = ./wg-config-server;
-            vendorSha256 = "sha256-xGPzODAJOls8RyyYdoEbPqz63i4oex41QsF1HNpmWAc=";
-            CGO_ENABLED = 0;
-            ldflags = [ "-s" "-w" ];
-          })
-          { };
       };
       nixosModules.default = { modulesPath, ... }: {
         disabledModules = [ "${modulesPath}/services/networking/avahi-daemon.nix" ];
@@ -45,12 +36,19 @@
         ];
       };
       packages = forAllSystems ({ pkgs, ... }: {
-        inherit (pkgs) netdump wg-config-server;
+        inherit (pkgs) netdump;
         test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
       });
       devShells = forAllSystems ({ pkgs, system, ... }: {
         default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ bashInteractive go ];
+          nativeBuildInputs = with pkgs; [
+            bashInteractive
+            go
+            (writeShellScriptBin "get-bogon-networks" ''
+              ${curl}/bin/curl --silent https://ipgeolocation.io/resources/bogon.html |
+                ${htmlq}/bin/htmlq "td:first-child" --text
+            '')
+          ];
           inherit (inputs.pre-commit-hooks.lib.${system}.run {
             src = ./.;
             hooks.nixpkgs-fmt.enable = true;

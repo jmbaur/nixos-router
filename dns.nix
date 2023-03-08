@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 let
   mkDotDns = map (ip: "tls://${ip}");
-  upstreamDnsProvider = lib.getAttr config.router.upstreamDnsProvider {
+  dnsProvider = lib.getAttr config.router.dnsProvider {
     google = {
       servers = mkDotDns [ "8.8.8.8" "8.8.4.4" "2001:4860:4860::8888" "2001:4860:4860::8844" ];
       serverName = "dns.google";
@@ -19,6 +19,12 @@ let
       serverName = "dns11.quad9.net";
     };
   };
+  internalDnsEntries = lib.concatMapStrings
+    ({ ipv4, ipv6Ula, name, ... }@host: ''
+      ${ipv4} ${name}.home.arpa
+      ${ipv6Ula} ${name}.home.arpa
+    '')
+    (builtins.attrValues config.router.hosts);
 in
 {
   config = lib.mkIf config.router.enable {
@@ -33,12 +39,21 @@ in
     services.coredns = {
       enable = true;
       config = ''
+        home.arpa {
+          hosts ${pkgs.writeText "home-arpa-hosts.txt" internalDnsEntries} {
+            reload 0 # the file is read-only, no need to dynamically reload it
+          }
+          any
+          errors
+          prometheus :9153
+        }
+
         . {
           hosts ${pkgs.stevenblack-blocklist}/hosts {
             fallthrough
           }
-          forward . ${toString upstreamDnsProvider.servers} {
-            tls_servername ${upstreamDnsProvider.serverName}
+          forward . ${toString dnsProvider.servers} {
+            tls_servername ${dnsProvider.serverName}
             policy random
             health_check 5s
           }
@@ -49,28 +64,7 @@ in
           }
           prometheus :9153
         }
-
-      '' + lib.concatMapStringsSep "\n"
-        (network:
-          let
-            allEntries = (lib.flatten (map
-              (host: [ "${host._computed._ipv4} ${host.name}.${network.domain}" ])
-              (builtins.attrValues network.hosts)));
-            hostsFile = pkgs.writeText "${network.domain}.hosts" ''
-              ${lib.concatStringsSep "\n" allEntries}
-            '';
-          in
-          ''
-            ${network.domain} {
-              hosts ${hostsFile} {
-                reload 0 # the file is read-only, no need to dynamically reload it
-              }
-              any
-              errors
-              prometheus :9153
-            }
-          '')
-        (builtins.attrValues config.router.inventory.networks);
+      '';
     };
   };
 }

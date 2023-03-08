@@ -1,4 +1,5 @@
 { config, lib, ... }:
+# TODO(jared): automate fetching these networks
 # NOTE: bogon networks obtained from
 # https://ipgeolocation.io/resources/bogon.html
 let
@@ -67,7 +68,7 @@ let
   wan6IsHurricaneElectric = heCfg.enable;
 
   wan = {
-    name = config.router.wan;
+    name = config.router.wanInterface;
     DHCP = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "yes";
     networkConfig = {
       LinkLocalAddressing = if config.router.wanSupportsDHCPv6 then "yes" else "no";

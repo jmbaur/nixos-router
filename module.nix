@@ -7,7 +7,6 @@
     ./options.nix
     ./ra.nix
     ./wan.nix
-    ./wireguard.nix
   ];
 
   config = lib.mkIf config.router.enable {
@@ -26,9 +25,5 @@
 
     networking.useDHCP = lib.mkForce false;
     systemd.network.enable = true;
-
-    environment.etc."inventory.json".source = (pkgs.formats.json { }).generate
-      "inventory.json"
-      config.router.inventory;
   };
 }

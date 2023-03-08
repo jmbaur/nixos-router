@@ -1,12 +1,6 @@
 # NixOS Router
 
-A _somewhat_ generic NixOS module for configuring a router/firewall device.
-
-## Assumptions
-
-This is currently a fairly opinionated nixos module, so there are some
-assumptions that fit best with my current setup. I am working to make the number
-of assumptions less and less.
+A NixOS module for configuring a super simple router/firewall device.
 
 ## Requirements
 

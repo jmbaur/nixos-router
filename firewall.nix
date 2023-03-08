@@ -13,7 +13,6 @@
             devWAN = networks.wan.name;
             devWAN6 = if wan6IsHurricaneElectric then heCfg.name else devWAN;
 
-            # { right = [v4networks]; wrong = [v6networks]; }
             bogonNetworks = lib.mapAttrs (_: routes: map (route: route.routeConfig.Destination) routes) (
               builtins.partition
                 (route: (builtins.match
@@ -26,16 +25,6 @@
             );
             v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
             v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
-
-            lanIPv4Networks = lib.concatMapStringsSep ", "
-              (network: network._computed._networkIPv4Cidr)
-              (builtins.attrValues config.router.inventory.networks);
-
-            wireguardPorts = lib.concatMapStringsSep ", " (netdev: toString netdev.wireguardConfig.ListenPort)
-              (builtins.attrValues
-                (lib.filterAttrs
-                  (_: netdev: netdev.netdevConfig.Kind == "wireguard" && netdev.wireguardConfig ? ListenPort)
-                  config.systemd.network.netdevs));
           in
           lib.mkBefore (''
             add table inet firewall
@@ -52,7 +41,7 @@
             add table ip nat
             add chain ip nat prerouting { type nat hook prerouting priority 100; policy accept; }
             add chain ip nat postrouting { type nat hook postrouting priority 100; policy accept; }
-            add rule ip nat postrouting ip saddr { ${lanIPv4Networks} } oifname ${devWAN} masquerade
+            add rule ip nat postrouting ip saddr ${config.router.ipv4Prefix} oifname ${devWAN} masquerade
 
             # Always allow input from LAN interfaces to access crucial router IP services
             add rule inet firewall input iifname ne { ${devWAN}, ${devWAN6} } icmp type { destination-unreachable, echo-request, parameter-problem, time-exceeded } accept
@@ -70,9 +59,6 @@
             add rule inet firewall input jump not_in_internet
             add rule inet firewall forward jump not_in_internet
             add rule inet firewall output jump not_in_internet
-
-            # Allow all wireguard traffic
-            ${lib.optionalString (wireguardPorts != "") "add rule inet firewall input meta l4proto { udp } th dport { ${wireguardPorts} } accept"}
 
             # Allow limited icmp echo requests to wan interfaces
             add rule inet firewall input iifname . icmp type { ${devWAN} . echo-request } limit rate 5/second accept
@@ -100,42 +86,7 @@
                     [ "add rule inet firewall input iifname ${iface} jump ${chain}" ]
                 )
                 config.router.firewall.interfaces)))
-          + "\n" +
-          # forwarding rules
-          (lib.concatStringsSep "\n" (lib.flatten (map
-            (
-              network:
-              let
-                interface = "${config.systemd.network.networks.${network.name}.name}";
-                chainTo = "forward_to_${network.name}";
-              in
-              ([
-                "add rule inet firewall forward iifname . oifname { ${interface} . ${devWAN}, ${interface} . ${devWAN6} } accept" # allow the network to access the internet
-                "add chain inet firewall ${chainTo}" # chain that filters traffic forwarding TO the target network
-                "add rule inet firewall forward oifname ${interface} jump ${chainTo}" # add the prior chain to the forward chain
-              ] ++
-              (lib.flatten
-                (lib.mapAttrsToList
-                  (policyName: policy:
-                    let
-                      nftPrefix = "add rule inet firewall ${chainTo}";
-                      policyNetwork = config.router.inventory.networks.${policyName};
-                      iifname = "${config.systemd.network.networks.${policyNetwork.name}.name}";
-                    in
-                    (
-                      (lib.optional
-                        (policy.allowedTCPPorts != [ ]) "${nftPrefix} meta l4proto tcp th dport { ${lib.concatMapStringsSep ", " toString policy.allowedTCPPorts} } accept")
-                      ++
-                      (lib.optional
-                        (policy.allowedUDPPorts != [ ]) "${nftPrefix} meta l4proto udp th dport { ${lib.concatMapStringsSep ", " toString policy.allowedUDPPorts} } accept")
-                      ++
-                      (lib.optional
-                        (policy.allowAll) "${nftPrefix} iifname ${iifname} oifname ${interface} accept")
-                    )
-                  )
-                  (network.policy))))
-            )
-            (builtins.attrValues config.router.inventory.networks)))));
+          + "\n");
       };
     };
   };
