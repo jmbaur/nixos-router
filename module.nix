@@ -1,6 +1,5 @@
 { config, lib, pkgs, ... }: {
   imports = [
-    ./dhcp.nix
     ./dns.nix
     ./firewall.nix
     ./lan.nix
