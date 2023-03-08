@@ -18,6 +18,7 @@
         networkConfig = {
           IPv6AcceptRA = false;
           DHCPServer = true;
+          IgnoreCarrierLoss = true;
           Address = [
             "${network.hosts._router._computed._ipv4Cidr}"
             "${network.hosts._router._computed._ipv6.ulaCidr}"
