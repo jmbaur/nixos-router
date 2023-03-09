@@ -70,6 +70,10 @@
           ''
           +
           # input rules
+          ''
+
+            # custom global input rules
+          '' +
           (lib.concatStringsSep "\n" (lib.flatten (
             (map (port: "add rule inet firewall input meta l4proto tcp th dport ${toString port} accept") config.router.firewall.allowedTCPPorts)
               ++
@@ -78,7 +82,10 @@
               (map (portRange: "add rule inet firewall input meta l4proto tcp th dport ${toString portRange.from}-${toString portRange.to} accept") config.router.firewall.allowedTCPPortRanges)
               ++
               (map (portRange: "add rule inet firewall input meta l4proto udp th dport ${toString portRange.from}-${toString portRange.to} accept") config.router.firewall.allowedUDPPortRanges)
-          ))) + "\n" +
+          ))) + ''
+
+            # custom interface-specific input rules
+          '' +
           (lib.concatStringsSep "\n"
             (lib.flatten
               (lib.mapAttrsToList
@@ -95,7 +102,10 @@
                     [ "add rule inet firewall input iifname ${iface} jump ${chain}" ]
                 )
                 config.router.firewall.interfaces)))
-          + "\n" + (
+          + ''
+
+            # forward rules for LAN
+          '' + (
             let
               interface = config.systemd.network.networks.lan.name;
             in
