@@ -26,7 +26,7 @@
             v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
             v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
           in
-          lib.mkBefore (''
+          lib.mkForce (''
             add table inet firewall
 
             add chain inet firewall input { type filter hook input priority 0; policy drop; }
