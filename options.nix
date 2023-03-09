@@ -130,7 +130,10 @@ in
     };
     # duplicate `networking.firewall` options that are implemented in nftables
     # in this module.
-    firewall = { inherit (options.networking.firewall) interfaces; };
+    firewall = {
+      inherit (options.networking.firewall)
+        interfaces allowedUDPPorts allowedUDPPortRanges allowedTCPPorts allowedTCPPortRanges;
+    };
     lanInterface = mkOption {
       type = types.str;
       description = ''

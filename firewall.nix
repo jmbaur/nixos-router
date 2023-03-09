@@ -70,6 +70,15 @@
           ''
           +
           # input rules
+          (lib.concatStringsSep "\n" lib.flatten (
+            (map (port: "add rule inet firewall input meta l4proto tcp th dport ${toString port} accept") config.router.firewall.allowedTCPPorts)
+              ++
+              (map (port: "add rule inet firewall input meta l4proto udp th dport ${toString port} accept") config.router.firewall.allowedUDPPorts)
+              ++
+              (map (portRange: "add rule inet firewall input meta l4proto tcp th dport ${toString portRange.from}-${toString portRange.to} accept") config.router.firewall.allowedTCPPortRanges)
+              ++
+              (map (portRange: "add rule inet firewall input meta l4proto udp th dport ${toString portRange.from}-${toString portRange.to} accept") config.router.firewall.allowedUDPPortRanges)
+          )) + "\n" +
           (lib.concatStringsSep "\n"
             (lib.flatten
               (lib.mapAttrsToList
