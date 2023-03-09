@@ -132,7 +132,10 @@ in
     # in this module.
     firewall = {
       inherit (options.networking.firewall)
-        interfaces allowedUDPPorts allowedUDPPortRanges allowedTCPPorts allowedTCPPortRanges;
+        extraInputRules extraForwardRules
+        interfaces
+        allowedUDPPorts allowedUDPPortRanges allowedTCPPorts allowedTCPPortRanges
+        ;
     };
     lanInterface = mkOption {
       type = types.str;

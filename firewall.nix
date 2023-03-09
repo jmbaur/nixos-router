@@ -69,7 +69,6 @@
             add rule inet firewall forward iifname . icmpv6 type { ${devWAN6} . echo-request } accept
           ''
           +
-          # input rules
           ''
 
             # custom global input rules
@@ -104,6 +103,12 @@
                 config.router.firewall.interfaces)))
           + ''
 
+            # extra input rules
+            ${lib.concatMapStringsSep "\n"
+              (inputRule: "add rule inet firewall input ${inputRule}")
+              (lib.filter (s: s != "") (lib.splitString "\n" config.router.firewall.extraInputRules))}
+          '' + ''
+
             # forward rules for LAN
           '' + (
             let
@@ -112,7 +117,15 @@
             ''
               add rule inet firewall forward iifname . oifname { ${interface} . ${devWAN}, ${interface} . ${devWAN6} } accept # allow the LAN to access the internet
             ''
-          ));
+          )
+          + ''
+
+            # extra forward rules
+            ${lib.concatMapStringsSep "\n"
+              (forwardRule: "add rule inet firewall forward ${forwardRule}")
+              (lib.filter (s: s != "") (lib.splitString "\n" config.router.firewall.extraForwardRules))}
+          ''
+          );
       };
     };
   };
