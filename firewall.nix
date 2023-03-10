@@ -19,9 +19,7 @@
                   "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?"
                   route.routeConfig.Destination) != null
                 )
-                (networks.wan.routes ++
-                  (lib.optionals config.router.heTunnelBroker.enable networks.hurricane.routes)
-                )
+                networks.wan.routes
             );
             v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
             v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
