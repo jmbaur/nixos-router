@@ -16,13 +16,14 @@ let
   );
   v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
   v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
-  bogonNetworkRules = ''
+  bogonInputRules = ''
     iifname { ${devWAN} } ip saddr { ${v4BogonNetworks} } drop
     iifname { ${devWAN6} } ip6 saddr { ${v6BogonNetworks} } drop
+  '';
+  bogonOutputRules = ''
     oifname { ${devWAN} } ip daddr { ${v4BogonNetworks} } drop
     oifname { ${devWAN6} } ip6 daddr { ${v6BogonNetworks} } drop
   '';
-
 in
 {
   config = lib.mkIf config.router.enable {
@@ -51,14 +52,15 @@ in
       };
 
       extraInputRules = ''
-        ${bogonNetworkRules}
+        ${bogonInputRules}
 
         iifname ne { ${devWAN}, ${devWAN6} } icmp type { destination-unreachable, echo-request, parameter-problem, time-exceeded } accept
         iifname ne { ${devWAN}, ${devWAN6} } icmpv6 type { destination-unreachable, echo-request, nd-neighbor-advert, nd-neighbor-solicit, nd-router-solicit, packet-too-big, parameter-problem, time-exceeded } accept
       '';
 
       extraForwardRules = ''
-        ${bogonNetworkRules}
+        ${bogonInputRules}
+        ${bogonOutputRules}
 
         # Allow icmpv6 echo requests to internal network hosts (needed for
         # proper IPv6 functionality)
