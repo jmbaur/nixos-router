@@ -1,9 +1,8 @@
-{ config, lib, pkgs, ... }: {
+{ config, lib, ... }: {
   imports = [
     ./dns.nix
     ./firewall.nix
     ./lan.nix
-    ./monitoring.nix
     ./options.nix
     ./ra.nix
     ./wan.nix
