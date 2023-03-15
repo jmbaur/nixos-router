@@ -65,6 +65,13 @@ in
         # Allow icmpv6 echo requests to internal network hosts (needed for
         # proper IPv6 functionality)
         iifname . icmpv6 type { ${devWAN6} . echo-request } accept
+
+        ${lib.optionalString wan6IsHurricaneElectric ''
+          # The nixpkgs NAT module sets up forward rules for one external
+          # interface. Make sure it is setup here for a hurricane electric
+          # tunnel interface.
+          iifname { ${lib.concatStringsSep ", " config.networking.nat.internalInterfaces} } oifname ${devWAN6} accept
+        ''}
       '';
     };
   };
