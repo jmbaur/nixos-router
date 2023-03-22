@@ -10,6 +10,7 @@
       name = config.router.lanInterface;
       linkConfig.ActivationPolicy = "always-up";
       networkConfig = {
+        DHCPPrefixDelegation = true;
         IPv6AcceptRA = false;
         DHCPServer = true;
         IgnoreCarrierLoss = true;
@@ -18,6 +19,10 @@
           "${config.router.hosts._router.ipv6UlaCidr}"
         ] ++ (lib.optional (config.router.ipv6GuaPrefix != null)
           "${config.router.hosts._router.ipv6GuaCidr}");
+      };
+      dhcpPrefixDelegationConfig = {
+        Token = "::1";
+        SubnetId = 0;
       };
       dhcpServerConfig = {
         PoolOffset = 25;
