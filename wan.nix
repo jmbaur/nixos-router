@@ -25,6 +25,10 @@ let
       UseDNS = false;
       PrefixDelegationHint = "::/${toString config.router.wan6PrefixHint}";
     };
+    ipv6AcceptRAConfig = {
+      UseDNS = false;
+      UseDomains = false;
+    };
     linkConfig.RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     routes = map
       (Destination: {
