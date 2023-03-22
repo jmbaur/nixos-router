@@ -53,18 +53,11 @@ in
 
       extraInputRules = ''
         ${bogonInputRules}
-
-        iifname ne { ${devWAN}, ${devWAN6} } icmp type { destination-unreachable, echo-request, parameter-problem, time-exceeded } accept
-        iifname ne { ${devWAN}, ${devWAN6} } icmpv6 type { destination-unreachable, echo-request, nd-neighbor-advert, nd-neighbor-solicit, nd-router-solicit, packet-too-big, parameter-problem, time-exceeded } accept
       '';
 
       extraForwardRules = ''
         ${bogonInputRules}
         ${bogonOutputRules}
-
-        # Allow icmpv6 echo requests to internal network hosts (needed for
-        # proper IPv6 functionality)
-        iifname . icmpv6 type { ${devWAN6} . echo-request } accept
 
         ${lib.optionalString wan6IsHurricaneElectric ''
           # The nixpkgs NAT module sets up forward rules for one external
