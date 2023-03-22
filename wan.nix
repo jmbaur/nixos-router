@@ -9,17 +9,25 @@ let
     name = config.router.wanInterface;
     DHCP = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "yes";
     networkConfig = {
-      LinkLocalAddressing = if config.router.wanSupportsDHCPv6 then "yes" else "no";
+      LinkLocalAddressing = config.router.wanSupportsDHCPv6;
+      IPv6AcceptRA = config.router.wanSupportsDHCPv6;
       IPForward = true;
     } // (lib.optionalAttrs wan6IsHurricaneElectric {
       Tunnel = config.systemd.network.netdevs.hurricane.netdevConfig.Name;
-      IPv6AcceptRA = false;
     });
     dhcpV4Config = {
       UseDNS = false;
       UseDomains = false;
+      UseHostname = false;
+      UseTimezone = false;
     };
-    dhcpV6Config.PrefixDelegationHint = "::/${toString config.router.wan6PrefixHint}";
+    dhcpV6Config = lib.mkIf config.router.wanSupportsDHCPv6 {
+      UseDNS = false;
+      UseDomains = false;
+      UseHostname = false;
+      UseTimezone = false;
+      PrefixDelegationHint = "::/${toString config.router.wan6PrefixHint}";
+    };
     linkConfig.RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     routes = map
       (Destination: {
