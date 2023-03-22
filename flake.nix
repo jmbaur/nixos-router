@@ -1,7 +1,6 @@
 {
   description = "nixos-router";
   inputs = {
-    nixpkgs-avahi-deny-interfaces.url = "github:jmbaur/nixpkgs/avahi-daemon-deny-interfaces";
     nixpkgs.url = "nixpkgs/nixos-unstable";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
@@ -28,12 +27,8 @@
           { };
       };
       nixosModules.default = { modulesPath, ... }: {
-        disabledModules = [ "${modulesPath}/services/networking/avahi-daemon.nix" ];
         nixpkgs.overlays = [ inputs.self.overlays.default ];
-        imports = [
-          "${inputs.nixpkgs-avahi-deny-interfaces}/nixos/modules/services/networking/avahi-daemon.nix"
-          ./module.nix
-        ];
+        imports = [ ./module.nix ];
       };
       packages = forAllSystems ({ pkgs, ... }: {
         inherit (pkgs) netdump;
