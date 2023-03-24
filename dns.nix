@@ -44,7 +44,6 @@ in
             reload 0 # the file is read-only, no need to dynamically reload it
           }
           any
-          errors
           prometheus :9153
         }
 
@@ -58,10 +57,6 @@ in
             health_check 5s
           }
           cache 30
-          errors {
-            consolidate 5m ".* i/o timeout$" warning
-            consolidate 30s "^Failed to .+"
-          }
           prometheus :9153
         }
       '';
