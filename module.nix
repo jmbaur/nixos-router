@@ -14,13 +14,7 @@
       openFirewall = false;
     };
 
-    services.ntp = {
-      enable = true;
-      # continue to serve time to the network in case internet access is lost
-      extraConfig = ''
-        tos orphan 15
-      '';
-    };
+    services.openntpd.enable = true;
 
     networking.useDHCP = lib.mkForce false;
     systemd.network.enable = true;
