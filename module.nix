@@ -10,13 +10,6 @@
 
   config = lib.mkIf config.router.enable (lib.mkMerge [
     {
-      services.avahi = {
-        enable = false;
-        openFirewall = false;
-      };
-
-      services.openntpd.enable = true;
-
       networking.useDHCP = lib.mkForce false;
       systemd.network.enable = true;
     }

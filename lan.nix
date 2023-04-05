@@ -29,8 +29,6 @@
         PoolSize = 225;
         EmitDNS = true;
         DNS = "_server_address";
-        EmitNTP = true;
-        NTP = "_server_address";
         SendOption = [ "15:string:home.arpa" ];
       };
       dhcpServerStaticLeases = lib.mapAttrsToList
