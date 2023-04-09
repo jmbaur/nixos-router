@@ -20,7 +20,6 @@ let
       UseDomains = false;
       UseHostname = false;
       UseTimezone = false;
-      SendRelease = false; # prevent lease release on restart/reboot
     };
     dhcpV6Config = lib.mkIf config.router.wanSupportsDHCPv6 {
       UseDNS = false;
