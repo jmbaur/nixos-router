@@ -1,7 +1,10 @@
-{ coredns, writeShellApplication, git }:
-coredns.overrideAttrs (old: {
+{ coredns, writeShellApplication, git, lib }:
+(coredns.overrideAttrs (old: {
   patches = [ ./coredns-with-mdns.patch ];
-  vendorHash = "";
+  vendorHash = lib.fakeSha256;
+  preBuild = ''
+    go generate ./...
+  '' + (old.preBuild or "");
   passthru = old.passthru // {
     update = writeShellApplication {
       name = "update-coredns-with-mdns";
@@ -13,10 +16,10 @@ coredns.overrideAttrs (old: {
         cd coredns
         echo "mdns:github.com/openshift/coredns-mdns" >> plugin.cfg
         go get github.com/openshift/coredns-mdns
-        go generate
-        go mod tidy
         git diff > "''${orig_pwd}/coredns-with-mdns.patch"
       '';
     };
   };
-})
+})).override {
+  overrideModAttrs = _: { outputHash = lib.fakeHash; };
+}

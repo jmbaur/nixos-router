@@ -1,36 +1,8 @@
-diff --git a/core/dnsserver/zdirectives.go b/core/dnsserver/zdirectives.go
-index 6d71375..f9649c4 100644
---- a/core/dnsserver/zdirectives.go
-+++ b/core/dnsserver/zdirectives.go
-@@ -62,4 +62,5 @@ var Directives = []string{
- 	"on",
- 	"sign",
- 	"view",
-+	"mdns",
- }
-diff --git a/core/plugin/zplugin.go b/core/plugin/zplugin.go
-index b97cd85..f1f0da0 100644
---- a/core/plugin/zplugin.go
-+++ b/core/plugin/zplugin.go
-@@ -56,4 +56,5 @@ import (
- 	_ "github.com/coredns/coredns/plugin/tsig"
- 	_ "github.com/coredns/coredns/plugin/view"
- 	_ "github.com/coredns/coredns/plugin/whoami"
-+	_ "github.com/openshift/coredns-mdns"
- )
 diff --git a/go.mod b/go.mod
-index edeb678..ac32138 100644
+index edeb678..5592a88 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -17,6 +17,7 @@ require (
- 	github.com/infobloxopen/go-trees v0.0.0-20200715205103-96a057b8dfb9
- 	github.com/matttproud/golang_protobuf_extensions v1.0.4
- 	github.com/miekg/dns v1.1.50
-+	github.com/openshift/coredns-mdns v0.0.0-20210625150643-8c0b6474833f
- 	github.com/opentracing/opentracing-go v1.2.0
- 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.5.0
- 	github.com/openzipkin/zipkin-go v0.4.1
-@@ -56,6 +57,8 @@ require (
+@@ -56,6 +56,8 @@ require (
  	github.com/DataDog/sketches-go v1.2.1 // indirect
  	github.com/Microsoft/go-winio v0.5.1 // indirect
  	github.com/beorn7/perks v1.0.1 // indirect
@@ -39,10 +11,11 @@ index edeb678..ac32138 100644
  	github.com/cespare/xxhash/v2 v2.1.2 // indirect
  	github.com/coreos/go-semver v0.3.0 // indirect
  	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
-@@ -89,12 +92,14 @@ require (
+@@ -89,12 +91,15 @@ require (
  	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
  	github.com/modern-go/reflect2 v1.0.2 // indirect
  	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
++	github.com/openshift/coredns-mdns v0.0.0-20210625150643-8c0b6474833f // indirect
 +	github.com/openshift/mdns-publisher v0.0.0-20200219161514-0e41fab1ddec // indirect
  	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
  	github.com/oschwald/maxminddb-golang v1.10.0 // indirect
