@@ -18,6 +18,7 @@
     in
     {
       overlays.default = final: prev: {
+        coredns-with-mdns = prev.callPackage ./coredns-with-mdns.nix { };
         netdump = prev.callPackage
           ({ buildGoModule, ... }: buildGoModule {
             name = "netdump";
@@ -31,7 +32,7 @@
         imports = [ ./module.nix ];
       };
       packages = forAllSystems ({ pkgs, ... }: {
-        inherit (pkgs) netdump;
+        inherit (pkgs) netdump coredns-with-mdns;
         test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
       });
       devShells = forAllSystems ({ pkgs, system, ... }: {
