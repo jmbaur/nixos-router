@@ -8,14 +8,8 @@
     ./wan.nix
   ];
 
-  config = lib.mkIf config.router.enable (lib.mkMerge [
-    {
-      networking.useDHCP = lib.mkForce false;
-      systemd.network.enable = true;
-    }
-    (lib.mkIf config.services.hostapd.enable {
-      # fix hostapd startup ordering
-      systemd.services.hostapd.before = [ "systemd-networkd.service" ];
-    })
-  ]);
+  config = lib.mkIf config.router.enable {
+    networking.useDHCP = lib.mkForce false;
+    systemd.network.enable = true;
+  };
 }
