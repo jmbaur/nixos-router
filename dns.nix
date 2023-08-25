@@ -27,16 +27,15 @@ let
 in
 {
   config = lib.mkIf config.router.enable {
-    # use coredns instance for local resolution
-    networking.nameservers = [ "::1" "127.0.0.1" ];
-
     services.resolved = {
       enable = true;
-      # SNI format
-      fallbackDns = map (ip: "${ip}#${dnsProvider.serverName}") dnsProvider.servers;
-      extraConfig = ''
-        DNSOverTLS=yes
-      '';
+      fallbackDns = dnsProvider.servers;
+    };
+
+    # use coredns instance for local resolution
+    systemd.network.networks.lo = {
+      matchConfig.Type = "loopback";
+      dns = [ "::1" "127.0.0.1" ];
     };
 
     services.coredns = {
