@@ -34,9 +34,8 @@ in
       enable = true;
       # SNI format
       fallbackDns = map (ip: "${ip}#${dnsProvider.serverName}") dnsProvider.servers;
-      DNSOverTLS = true;
-      # coredns does DNS resolution
       extraConfig = ''
+        DNSOverTLS=yes
         DNSStubListener=no
       '';
     };
