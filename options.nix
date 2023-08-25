@@ -62,8 +62,8 @@ in
   options.router = with lib; {
     enable = mkEnableOption "nixos router";
     dnsProvider = mkOption {
-      type = types.enum [ "google" "cloudflare" "quad9" "quad9_ecs" ];
-      default = "quad9_ecs";
+      type = types.enum [ "google" "cloudflare" "quad9" "quad9-ecs" ];
+      default = "quad9-ecs";
       description = ''
         The upstream DNS provider to use.
       '';

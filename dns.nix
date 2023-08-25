@@ -14,13 +14,13 @@ let
       servers = mkDotDns [ "9.9.9.9" "149.112.112.112" "2620:fe::fe" "2620:fe::9" ];
       serverName = "dns.quad9.net";
     };
-    quad9_ecs = {
+    quad9-ecs = {
       servers = mkDotDns [ "9.9.9.11" "149.112.112.11" "2620:fe::11" "2620:fe::fe:11" ];
       serverName = "dns11.quad9.net";
     };
   };
   internalDnsEntries = lib.concatMapStrings
-    ({ ipv4, ipv6Ula, name, ... }@host: ''
+    ({ ipv4, ipv6Ula, name, ... }: ''
       ${ipv4} ${name}.home.arpa
       ${ipv6Ula} ${name}.home.arpa
     '')
@@ -28,7 +28,7 @@ let
 in
 {
   config = lib.mkIf config.router.enable {
-    networking.nameservers = [ "127.0.0.1" "::1" ];
+    networking.nameservers = dnsProvider.servers;
     services.resolved = {
       enable = true;
       fallbackDns = config.networking.nameservers;
