@@ -27,10 +27,15 @@ let
 in
 {
   config = lib.mkIf config.router.enable {
-    networking.nameservers = dnsProvider.servers;
+    # use coredns instance for local resolution
+    networking.nameservers = [ "::1" "127.0.0.1" ];
+
     services.resolved = {
       enable = true;
-      fallbackDns = config.networking.nameservers;
+      # SNI format
+      fallbackDns = map (ip: "${ip}#${dnsProvider.serverName}") dnsProvider.servers;
+      DNSOverTLS = true;
+      # coredns does DNS resolution
       extraConfig = ''
         DNSStubListener=no
       '';
@@ -56,6 +61,7 @@ in
             policy random
             health_check 5s
           }
+          errors
           cache 30
           prometheus :9153
         }
