@@ -1,8 +1,6 @@
-{ options, config, lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   cfg = config.router;
-
-  routerHostName = config.networking.hostName;
 
   hostType = { name, config, ... }: {
     options = with lib; {

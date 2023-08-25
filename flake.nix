@@ -17,7 +17,7 @@
         });
     in
     {
-      overlays.default = final: prev: {
+      overlays.default = _: prev: {
         netdump = prev.callPackage
           ({ buildGoModule, ... }: buildGoModule {
             name = "netdump";
@@ -26,7 +26,7 @@
           })
           { };
       };
-      nixosModules.default = { modulesPath, ... }: {
+      nixosModules.default = { ... }: {
         nixpkgs.overlays = [ inputs.self.overlays.default ];
         imports = [ ./module.nix ];
       };
@@ -46,9 +46,10 @@
           ];
           inherit (inputs.pre-commit-hooks.lib.${system}.run {
             src = ./.;
+            hooks.deadnix.enable = true;
+            hooks.gofmt.enable = true;
             hooks.nixpkgs-fmt.enable = true;
             hooks.revive.enable = true;
-            hooks.gofmt.enable = true;
           }) shellHook;
         };
       });

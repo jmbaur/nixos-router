@@ -36,7 +36,6 @@ in
       fallbackDns = map (ip: "${ip}#${dnsProvider.serverName}") dnsProvider.servers;
       extraConfig = ''
         DNSOverTLS=yes
-        DNSStubListener=no
       '';
     };
 
@@ -44,6 +43,7 @@ in
       enable = true;
       config = ''
         home.arpa {
+          bind lo ${config.router.lanInterface}
           hosts ${pkgs.writeText "home-arpa-hosts.txt" internalDnsEntries} {
             reload 0 # the file is read-only, no need to dynamically reload it
           }
@@ -52,6 +52,7 @@ in
         }
 
         . {
+          bind lo ${config.router.lanInterface}
           hosts ${pkgs.stevenblack-blocklist}/hosts {
             fallthrough
           }
