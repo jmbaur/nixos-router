@@ -33,10 +33,7 @@ in
     };
 
     # use coredns instance for local resolution
-    systemd.network.networks.lo = {
-      matchConfig.Type = "loopback";
-      dns = [ "::1" "127.0.0.1" ];
-    };
+    networking.nameservers = [ "::1" "127.0.0.1" ];
 
     services.coredns = {
       enable = true;
