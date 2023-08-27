@@ -29,7 +29,10 @@ let
       UseDNS = false;
       UseDomains = false;
     };
-    linkConfig.RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
+    linkConfig = {
+      RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
+      RequiredForOnline = true;
+    };
     routes = map
       (Destination: {
         routeConfig = { inherit Destination; Type = "unreachable"; };

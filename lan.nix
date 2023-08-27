@@ -8,7 +8,10 @@
 
     systemd.network.networks.lan = {
       name = config.router.lanInterface;
-      linkConfig.ActivationPolicy = "always-up";
+      linkConfig = {
+        ActivationPolicy = "always-up";
+        RequiredForOnline = true;
+      };
       networkConfig = {
         DHCPPrefixDelegation = true;
         IPv6AcceptRA = false;

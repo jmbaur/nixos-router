@@ -32,8 +32,12 @@ in
       fallbackDns = dnsProvider.servers;
     };
 
-    # use coredns instance for local resolution
+    # Use coredns instance for local resolution.
     networking.nameservers = [ "::1" "127.0.0.1" ];
+
+    # Wait for interfaces we are binding on to be up, or else coredns won't
+    # listen on them.
+    systemd.services.coredns.after = [ "network-online.target" ];
 
     services.coredns = {
       enable = true;
