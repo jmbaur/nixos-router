@@ -11,7 +11,6 @@ let
     networkConfig = {
       LinkLocalAddressing = if config.router.wanSupportsDHCPv6 then "yes" else "no";
       IPv6AcceptRA = if config.router.wanSupportsDHCPv6 then "yes" else "no";
-      IPForward = true;
     } // (lib.optionalAttrs wan6IsHurricaneElectric {
       Tunnel = config.systemd.network.netdevs.hurricane.netdevConfig.Name;
     });
