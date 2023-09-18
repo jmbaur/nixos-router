@@ -87,6 +87,16 @@ in
         prefix delegation.
       '';
     };
+    wanSpoofedMac = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = ''
+        MAC address to use on the WAN interface. Needed for some devices
+        and some ISPs where a stable MAC address is required across
+        reboots or if the ISP will only operate with a specific MAC
+        address.
+      '';
+    };
     heTunnelBroker = {
       enable = mkEnableOption "Hurricane Electric TunnelBroker node";
       name = mkOption {
