@@ -22,7 +22,7 @@
           ({ buildGoModule, ... }: buildGoModule {
             name = "netdump";
             src = ./netdump;
-            vendorSha256 = null;
+            vendorHash = null;
           })
           { };
       };
