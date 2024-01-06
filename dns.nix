@@ -64,9 +64,10 @@ in
         . {
           bind lo ${config.router.lanInterface}
           ${lib.optionalString config.router.dns.adblock.enable ''
-          hosts ${adblockHosts} {
-            fallthrough
-          }
+            hosts ${adblockHosts} {
+              reload 0 # the file is read-only, no need to dynamically reload it
+              fallthrough
+            }
           ''}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
             tls_servername ${dnsProvider.serverName}
