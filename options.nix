@@ -59,13 +59,6 @@ in
 {
   options.router = with lib; {
     enable = mkEnableOption "nixos router";
-    dnsProvider = mkOption {
-      type = types.enum [ "google" "cloudflare" "quad9" "quad9-ecs" ];
-      default = "google";
-      description = ''
-        The upstream DNS provider to use.
-      '';
-    };
     wanInterface = mkOption {
       type = types.str;
       description = ''
@@ -171,6 +164,28 @@ in
       description = ''
         The hosts in this network.
       '';
+    };
+    dns = {
+      upstreamProvider = mkOption {
+        type = types.enum [ "google" "cloudflare" "quad9" "quad9-ecs" ];
+        default = "google";
+        description = ''
+          The upstream DNS provider to use.
+        '';
+      };
+      adblock = {
+        enable = mkEnableOption "adblock";
+        categories = mkOption {
+          type = types.listOf (types.enum [ "fakenews" "gambling" "porn" "social" ]);
+          default = [ ];
+          example = literalExpression ''[ "social" ]'';
+          description = mdDoc ''
+            Categories from (stevenblack)[https://github.com/StevenBlack/hosts]
+            to use for adblock. The base category (adware & malware) is always
+            included.
+          '';
+        };
+      };
     };
   };
 
