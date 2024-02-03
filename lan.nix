@@ -15,7 +15,7 @@ in
         IPv6AcceptRA = false;
         DHCPServer = true;
         IgnoreCarrierLoss = true;
-        Address = [ "192.168.1.0/24" cfg.routerIpv6Ula.cidr ] ++
+        Address = [ "192.168.1.1/24" cfg.routerIpv6Ula.cidr ] ++
           lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
       };
       dhcpServerConfig = {
