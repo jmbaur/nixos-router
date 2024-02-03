@@ -1,11 +1,11 @@
 { lib ? (import <nixpkgs> { }).lib }:
 let
-  bitShift = num: n:
+  leftShift = num: n:
     if n == 0
     then
       num
     else
-      bitShift (num * 2) (n - 1);
+      leftShift (num * 2) (n - 1);
 
   hexChars = lib.stringToCharacters "0123456789abcdef";
 
@@ -20,25 +20,41 @@ let
   toHextetString = hextetNum: lib.fixedWidthString 4 "0" (toNetworkHexString hextetNum);
 in
 rec {
-  inherit bitShift;
+  inherit leftShift;
 
   # Parse an IPv6 network address in CIDR form.
   #
-  # Example: parseIpv6Network "2001:db8::/64"
-  #          => { hextets = [ 8193 3512 0 0 0 0 0 0 ]; prefixLength = 64; }
+  # Example: parseIpv6Network "2001:db8:ffff::ffff/33"
+  #          => { hextets = [ 8193 3512 32768 0 0 0 0 0 ]; prefixLength = 33; }
   parseIpv6Network = networkCidr:
     let
       split = lib.splitString "/" networkCidr;
+
       prefixLength = lib.toInt (lib.elemAt split 1);
-      networkSplit = lib.filter
-        (hextet: hextet != "") # filter out IPv6 shorthand syntax ("::")
-        (lib.splitString ":" (lib.elemAt split 0));
+
+      unfilledHextets = map (lib.splitString ":") (lib.splitString "::" (lib.elemAt split 0));
+
+      numNeededHextets = lib.foldl (sum: xs: sum + lib.length xs) 0 unfilledHextets;
+
+      unmodifiedHextets = lib.flatten [
+        (map fromHex (lib.elemAt unfilledHextets 0))
+        (builtins.genList (_: 0) numNeededHextets)
+        (map fromHex (lib.elemAt unfilledHextets 1))
+      ];
+
+      fullHextets = lib.sublist 0 (prefixLength / 16) unmodifiedHextets;
+
+      nextHextetBits = lib.mod prefixLength 16;
+
+      partialHextet = lib.optional (nextHextetBits != 0)
+        (lib.bitAnd
+          (lib.elemAt unmodifiedHextets (lib.length fullHextets))
+          (leftShift ((leftShift 1 nextHextetBits) - 1) (16 - nextHextetBits)));
+
+      hextets = fullHextets ++ partialHextet
+        ++ builtins.genList (_: 0) (8 - (lib.length fullHextets) - (lib.length partialHextet));
     in
-    assert lib.length split == 2; {
-      inherit prefixLength;
-      hextets = map fromHex networkSplit
-        ++ builtins.genList (_: 0) (8 - lib.length networkSplit);
-    };
+    { inherit prefixLength hextets; };
 
   # Make an IPv6 address based on the network and host portion of the address.
   #
@@ -62,7 +78,7 @@ rec {
 
       macNums = map fromHex (lib.splitString ":" macAddress);
 
-      mkHextet = upper: lower: lib.bitOr (bitShift upper 8) lower;
+      mkHextet = upper: lower: lib.bitOr (leftShift upper 8) lower;
     in
     assert lib.length macNums == 6; # ensure the MAC address is the correct length
     (builtins.genList (_: 0) 4) ++ [
