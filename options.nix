@@ -1,60 +1,56 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 let
   cfg = config.router;
 
-  hostType = { name, config, ... }: {
-    options = with lib; {
-      name = mkOption {
-        type = types.str;
-        default = name;
-        description = lib.mdDoc ''
-          The name of the host. This will create a DNS entry and the host will
-          be reachable at `<name>.home.arpa`.
-        '';
+  _lib = import ./lib.nix { inherit lib; };
+
+  hasStaticGua = cfg.ipv6GuaPrefix != null;
+  guaNetwork = _lib.parseIpv6Cidr cfg.ipv6GuaPrefix;
+  ulaNetwork = _lib.parseIpv6Cidr cfg.ipv6UlaPrefix;
+
+  hostType = { name, config, ... }:
+    let
+      hostGuaAddress = _lib.mkIpv6AddressFromMac guaNetwork.network config.mac;
+      hostUlaAddress = _lib.mkIpv6AddressFromMac ulaNetwork.network config.mac;
+    in
+    {
+      options = with lib; {
+        name = mkOption {
+          type = types.str;
+          default = name;
+          description = lib.mdDoc ''
+            The name of the host. This will create a DNS entry and the host will
+            be reachable at `<name>.home.arpa`.
+          '';
+        };
+        mac = mkOption {
+          type = types.str;
+          description = ''
+            The hardware MAC address of the host.
+          '';
+        };
+        ipv6Ula = mkOption {
+          internal = true;
+          readOnly = true;
+          default = {
+            address = hostUlaAddress;
+            cidr = "${hostUlaAddress}/${toString ulaNetwork.size}";
+          };
+        };
+        ipv6Gua = mkOption {
+          internal = true;
+          readOnly = true;
+          default =
+            if hasStaticGua then
+              {
+                address = hostGuaAddress;
+                cidr = "${hostGuaAddress}/${toString guaNetwork.size}";
+              }
+            else
+              null;
+        };
       };
-      id = mkOption {
-        type = types.int;
-        description = ''
-          The ID of the host.
-        '';
-      };
-      mac = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = ''
-          The hardware MAC address of the host.
-        '';
-      };
-      ipv4 = mkOption { internal = true; type = types.str; };
-      ipv4Cidr = mkOption { internal = true; type = types.str; };
-      ipv6Ula = mkOption { internal = true; type = types.str; };
-      ipv6UlaCidr = mkOption { internal = true; type = types.str; };
-      ipv6Gua = mkOption { internal = true; type = types.nullOr types.str; };
-      ipv6GuaCidr = mkOption { internal = true; type = types.nullOr types.str; };
     };
-    config =
-      let
-        computed = lib.importJSON (pkgs.runCommand "hostdump-${name}.json" { } ''
-          ${pkgs.pkgsBuildBuild.netdump}/bin/netdump \
-            -id=${toString config.id} \
-            ${lib.optionalString (config.mac != null) "-mac=${config.mac}"} \
-            -ipv4-prefix=${cfg.ipv4Prefix} \
-            -ipv6-ula-prefix=${cfg.ipv6UlaPrefix} \
-            ${lib.optionalString (cfg.ipv6GuaPrefix != null) "-ipv6-gua-prefix=${cfg.ipv6GuaPrefix}"} \
-            | tee $out
-        '');
-      in
-      {
-        inherit (computed)
-          ipv4
-          ipv4Cidr
-          ipv6Ula
-          ipv6UlaCidr
-          ipv6Gua
-          ipv6GuaCidr
-          ;
-      };
-  };
 in
 {
   options.router = with lib; {
@@ -78,16 +74,6 @@ in
       description = ''
         Prefix size that the DHVPv6 client will use to hint to the server for
         prefix delegation.
-      '';
-    };
-    wanSpoofedMac = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = ''
-        MAC address to use on the WAN interface. Needed for some devices
-        and some ISPs where a stable MAC address is required across
-        reboots or if the ISP will only operate with a specific MAC
-        address.
       '';
     };
     heTunnelBroker = {
@@ -135,20 +121,22 @@ in
         The name of the physical interface that will be used for this network.
       '';
     };
-    ipv4Prefix = mkOption {
-      type = types.str;
-      default = "192.168.1.0/24";
-      description = ''
-        The IPv4 network prefix (in CIDR notation).
-      '';
-    };
     ipv6UlaPrefix = mkOption {
       type = types.str;
-      example = "fd38:5f81:b15d:0::/64";
+      example = "fd38:5f81:b15d::/64";
       description = ''
         The 64-bit IPv6 ULA network prefix (in CIDR notation). One can be
         generated at https://www.ip-six.de/index.php.
       '';
+    };
+    routerIpv6Ula = mkOption {
+      internal = true;
+      readOnly = true;
+      default =
+        let
+          address = _lib.mkIpv6Address ulaNetwork.network "1";
+        in
+        { inherit address; cidr = "${address}/${toString ulaNetwork.size}"; };
     };
     ipv6GuaPrefix = mkOption {
       type = types.nullOr types.str;
@@ -157,6 +145,18 @@ in
       description = ''
         The 64-bit IPv6 GUA network prefix (in CIDR notation).
       '';
+    };
+    routerIpv6Gua = mkOption {
+      internal = true;
+      readOnly = true;
+      default =
+        let
+          address = _lib.mkIpv6Address guaNetwork.network "1";
+        in
+        if hasStaticGua then
+          { inherit address; cidr = "${address}/${toString guaNetwork.size}"; }
+        else
+          null;
     };
     hosts = mkOption {
       type = types.attrsOf (types.submodule hostType);
@@ -192,22 +192,15 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        message = "Duplicate host IDs found";
-        assertion =
-          let
-            ids = lib.mapAttrsToList (_: host: host.id) cfg.hosts;
-          in
-          lib.length ids == lib.length (lib.unique ids);
-      }
-      {
         message = "Cannot set IPv6 GUA prefix and use DHCPv6 on the wan interface";
         assertion = (cfg.ipv6GuaPrefix != null) != cfg.wanSupportsDHCPv6;
       }
+      # We cannot fit a host's MAC address in an IPv6 address if the network is
+      # smaller than a /64.
+      {
+        message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
+        assertion = (if hasStaticGua then (guaNetwork.size <= 64) else true) && (ulaNetwork.size <= 64);
+      }
     ];
-
-    router.hosts._router = {
-      id = 1;
-      name = config.networking.hostName;
-    };
   };
 }

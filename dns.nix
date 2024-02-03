@@ -19,10 +19,11 @@ let
     };
   };
 
-  internalDnsEntries = lib.concatMapStrings
-    ({ ipv4, ipv6Ula, name, ... }: ''
-      ${ipv4} ${name}.home.arpa
-      ${ipv6Ula} ${name}.home.arpa
+  internalDnsEntries = ''
+    ${config.router.routerIpv6Ula.address} ${config.networking.hostName}.home.arpa
+  '' + lib.concatMapStrings
+    ({ ipv6Ula, name, ... }: ''
+      ${ipv6Ula.address} ${name}.home.arpa
     '')
     (builtins.attrValues config.router.hosts);
 

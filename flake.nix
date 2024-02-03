@@ -7,49 +7,27 @@
   };
   outputs = inputs:
     let
-      forAllSystems = f: inputs.nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ]
-        (system: f {
-          inherit system;
-          pkgs = import inputs.nixpkgs {
-            inherit system;
-            overlays = [ inputs.self.overlays.default ];
-          };
-        });
+      forAllSystems = f: inputs.nixpkgs.lib.genAttrs
+        [ "x86_64-linux" "aarch64-linux" ]
+        (system: f (import inputs.nixpkgs { inherit system; }));
     in
     {
-      overlays.default = _: prev: {
-        netdump = prev.callPackage
-          ({ buildGoModule, ... }: buildGoModule {
-            name = "netdump";
-            src = ./netdump;
-            vendorHash = null;
-          })
-          { };
-      };
-      nixosModules.default = { ... }: {
-        nixpkgs.overlays = [ inputs.self.overlays.default ];
-        imports = [ ./module.nix ];
-      };
-      packages = forAllSystems ({ pkgs, ... }: {
-        inherit (pkgs) netdump;
-        test = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
+      checks = forAllSystems (pkgs: {
+        default = pkgs.callPackage ./test.nix { };
       });
-      devShells = forAllSystems ({ pkgs, system, ... }: {
+      nixosModules.default = ./module.nix;
+      devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            bashInteractive
-            go
+          packages = with pkgs; [
             (writeShellScriptBin "get-bogon-networks" ''
               ${curl}/bin/curl --silent https://ipgeolocation.io/resources/bogon.html |
                 ${htmlq}/bin/htmlq "td:first-child" --text
             '')
           ];
-          inherit (inputs.pre-commit-hooks.lib.${system}.run {
+          inherit (inputs.pre-commit-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
             src = ./.;
             hooks.deadnix.enable = true;
-            hooks.gofmt.enable = true;
             hooks.nixpkgs-fmt.enable = true;
-            hooks.revive.enable = true;
           }) shellHook;
         };
       });

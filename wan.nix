@@ -29,10 +29,12 @@ let
       UseDomains = false;
     };
     linkConfig = {
-      RequiredFamilyForOnline = if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
       RequiredForOnline = true;
-    } // lib.optionalAttrs (config.router.wanSpoofedMac != null) {
-      MACAddress = config.router.wanSpoofedMac;
+      RequiredFamilyForOnline =
+        if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then
+          "ipv4"
+        else
+          "any";
     };
     routes = map
       (Destination: {
