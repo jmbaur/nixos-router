@@ -1,7 +1,13 @@
 { lib ? (import <nixpkgs> { }).lib }:
 let
+  bitShift = num: n:
+    if n == 0
+    then
+      num
+    else
+      bitShift (num * 2) (n - 1);
+
   hexChars = lib.stringToCharacters "0123456789abcdef";
-  # base32Chars = lib.stringToCharacters "abcdefghijklmnopqrstuvwxyz234567";
 
   # Return an integer between 0 and 15 representing the hex digit
   fromHexDigit = c:
@@ -9,69 +15,60 @@ let
 
   fromHex = s: lib.foldl (a: b: a * 16 + fromHexDigit b) 0 (lib.stringToCharacters (lib.toLower s));
 
-  # # Breakup into 2-byte integer chunks.
-  # bytes = hexstr:
-  #   let
-  #     len = lib.stringLength hexstr;
-  #     paddedStr = lib.fixedWidthString (len + (lib.mod len 2)) "0" hexstr;
-  #   in
-  #   map (n: fromHex (builtins.substring (2 * n) 2 paddedStr))
-  #     (lib.range 0 (((lib.stringLength paddedStr) / 2) - 1));
+  toNetworkHexString = num: lib.toLower (lib.toHexString num);
 
-  toNetworkHexString = s: lib.toLower (lib.toHexString s);
+  toHextetString = hextetNum: lib.fixedWidthString 4 "0" (toNetworkHexString hextetNum);
 in
-{
-  parseIpv6Cidr = cidr:
+rec {
+  inherit bitShift;
+
+  # Parse an IPv6 network address in CIDR form.
+  #
+  # Example: parseIpv6Network "2001:db8::/64"
+  #          => { network = [ 8193 3512 0 0 0 0 0 0 ]; prefixLength = 64; }
+  parseIpv6Network = networkCidr:
     let
-      split = lib.splitString "/" cidr;
-      size = lib.toInt (lib.elemAt split 1);
+      split = lib.splitString "/" networkCidr;
+      prefixLength = lib.toInt (lib.elemAt split 1);
+      networkSplit = lib.filter
+        (hextet: hextet != "") # filter out IPv6 shorthand syntax ("::")
+        (lib.splitString ":" (lib.elemAt split 0));
     in
-    assert lib.length split == 2;
-    {
-      inherit size;
-      network = builtins.head (builtins.match "(.*)::" (lib.elemAt split 0));
+    assert lib.length split == 2; {
+      inherit prefixLength;
+      hextets = map fromHex networkSplit
+        ++ builtins.genList (_: 0) (8 - lib.length networkSplit);
     };
 
   # Make an IPv6 address based on the network and host portion of the address.
   #
-  # Example: mkIpv6Address "2001:db8" "1"
+  # Example: mkIpv6Address [ 8193 3512 0 0 0 0 0 0 ] [ 0 0 0 0 0 0 0 1 ]
   #          => "2001:0db8:0000:0000:0000:0000:0000:0001"
-  mkIpv6Address = network: host:
-    let
-      splitNetwork = lib.splitString ":" network;
-      splitHost = lib.splitString ":" host;
-      paddedHextets = builtins.genList (_: "0") (8 - (lib.length splitNetwork) - (lib.length splitHost));
-    in
-    (lib.concatMapStringsSep ":"
-      (lib.fixedWidthString 4 "0")
-      (splitNetwork ++ paddedHextets ++ splitHost));
+  mkIpv6Address = networkHextets: hostHextets:
+    assert lib.length networkHextets == 8;
+    assert lib.length hostHextets == 8;
+    lib.concatMapStringsSep ":" toHextetString
+      (lib.zipListsWith lib.bitOr networkHextets hostHextets);
 
-  # Make an IPv6 address based on the network portion of the address and the
-  # mac address of a host. The network must be greater than or equal to a /64
-  # IPv6 prefix size in order to fit all the bytes in the host's MAC address.
+  # Generates the hextets of an IPv6 address with the last 64 bits populated
+  # based on the host's MAC address.
   #
-  # Example: mkIpv6AddressFromMac "2001:db8" "b9:20:42:35:6b:5f"
-  #          => "2001:0db8:0000:0000:bb20:42ff:fe35:6b5f"
-  mkIpv6AddressFromMac = network: macAddress:
+  # Example: hostHexetsFromMacAddress "b9:20:42:35:6b:5f"
+  #          => [ 0 0 0 0 47904 17151 65077 27487 ]
+  hostHexetsFromMacAddress = macAddress:
     let
-      # Makes one half of an IPv6 hextet
-      toOctetV6 = s: lib.fixedWidthString 2 "0" (toNetworkHexString s);
-
-      splitNetwork = lib.splitString ":" network;
-      paddedNetwork = assert lib.length splitNetwork <= 4;
-        splitNetwork ++ (builtins.genList (_: "0") (4 - (lib.length splitNetwork)));
-      macNums = map fromHex (lib.splitString ":" macAddress);
-
       ff = fromHex "ff";
       fe = fromHex "fe";
+
+      macNums = map fromHex (lib.splitString ":" macAddress);
+
+      mkHextet = upper: lower: lib.bitOr (bitShift upper 8) lower;
     in
-    lib.concatStringsSep ":" (
-      (map (lib.fixedWidthString 4 "0") paddedNetwork)
-      ++ map (lib.concatMapStrings toOctetV6) [
-        [ (builtins.bitXor (builtins.elemAt macNums 0) 2) (builtins.elemAt macNums 1) ]
-        [ (builtins.elemAt macNums 2) ff ]
-        [ fe (builtins.elemAt macNums 3) ]
-        [ (builtins.elemAt macNums 4) (builtins.elemAt macNums 5) ]
-      ]
-    );
+    assert lib.length macNums == 6; # ensure the MAC address is the correct length
+    (builtins.genList (_: 0) 4) ++ [
+      (mkHextet (builtins.bitXor (builtins.elemAt macNums 0) 2) (builtins.elemAt macNums 1))
+      (mkHextet (builtins.elemAt macNums 2) ff)
+      (mkHextet fe (builtins.elemAt macNums 3))
+      (mkHextet (builtins.elemAt macNums 4) (builtins.elemAt macNums 5))
+    ];
 }

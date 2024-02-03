@@ -5,13 +5,17 @@ let
   _lib = import ./lib.nix { inherit lib; };
 
   hasStaticGua = cfg.ipv6GuaPrefix != null;
-  guaNetwork = _lib.parseIpv6Cidr cfg.ipv6GuaPrefix;
-  ulaNetwork = _lib.parseIpv6Cidr cfg.ipv6UlaPrefix;
+  guaNetwork = _lib.parseIpv6Network cfg.ipv6GuaPrefix;
+  ulaNetwork = _lib.parseIpv6Network cfg.ipv6UlaPrefix;
+
+  mkIpv6UlaAddress = _lib.mkIpv6Address ulaNetwork.hextets;
+  mkIpv6GuaAddress = _lib.mkIpv6Address guaNetwork.hextets;
 
   hostType = { name, config, ... }:
     let
-      hostGuaAddress = _lib.mkIpv6AddressFromMac guaNetwork.network config.mac;
-      hostUlaAddress = _lib.mkIpv6AddressFromMac ulaNetwork.network config.mac;
+      hostHextets = _lib.hostHexetsFromMacAddress config.mac;
+      hostUlaAddress = mkIpv6UlaAddress hostHextets;
+      hostGuaAddress = mkIpv6GuaAddress hostHextets;
     in
     {
       options = with lib; {
@@ -19,8 +23,8 @@ let
           type = types.str;
           default = name;
           description = lib.mdDoc ''
-            The name of the host. This will create a DNS entry and the host will
-            be reachable at `<name>.home.arpa`.
+            The name of the host. This will create a DNS entry and the host
+            will be reachable at `<name>.home.arpa`.
           '';
         };
         mac = mkOption {
@@ -34,7 +38,7 @@ let
           readOnly = true;
           default = {
             address = hostUlaAddress;
-            cidr = "${hostUlaAddress}/${toString ulaNetwork.size}";
+            cidr = "${hostUlaAddress}/${toString ulaNetwork.prefixLength}";
           };
         };
         ipv6Gua = mkOption {
@@ -44,7 +48,7 @@ let
             if hasStaticGua then
               {
                 address = hostGuaAddress;
-                cidr = "${hostGuaAddress}/${toString guaNetwork.size}";
+                cidr = "${hostGuaAddress}/${toString guaNetwork.prefixLength}";
               }
             else
               null;
@@ -72,7 +76,7 @@ in
       type = types.int;
       default = 56;
       description = ''
-        Prefix size that the DHVPv6 client will use to hint to the server for
+        Prefix length that the DHVPv6 client will use to hint to the server for
         prefix delegation.
       '';
     };
@@ -125,8 +129,8 @@ in
       type = types.str;
       example = "fd38:5f81:b15d::/64";
       description = ''
-        The 64-bit IPv6 ULA network prefix (in CIDR notation). One can be
-        generated at https://www.ip-six.de/index.php.
+        The 64-bit IPv6 ULA network prefix (in CIDR notation). You can generate
+        a ULA prefix at https://www.ip-six.de/index.php.
       '';
     };
     routerIpv6Ula = mkOption {
@@ -134,9 +138,9 @@ in
       readOnly = true;
       default =
         let
-          address = _lib.mkIpv6Address ulaNetwork.network "1";
+          address = mkIpv6UlaAddress [ 0 0 0 0 0 0 0 1 ];
         in
-        { inherit address; cidr = "${address}/${toString ulaNetwork.size}"; };
+        { inherit address; cidr = "${address}/${toString ulaNetwork.prefixLength}"; };
     };
     ipv6GuaPrefix = mkOption {
       type = types.nullOr types.str;
@@ -151,10 +155,10 @@ in
       readOnly = true;
       default =
         let
-          address = _lib.mkIpv6Address guaNetwork.network "1";
+          address = mkIpv6GuaAddress [ 0 0 0 0 0 0 0 1 ];
         in
         if hasStaticGua then
-          { inherit address; cidr = "${address}/${toString guaNetwork.size}"; }
+          { inherit address; cidr = "${address}/${toString guaNetwork.prefixLength}"; }
         else
           null;
     };
@@ -199,7 +203,7 @@ in
       # smaller than a /64.
       {
         message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
-        assertion = (if hasStaticGua then (guaNetwork.size <= 64) else true) && (ulaNetwork.size <= 64);
+        assertion = (if hasStaticGua then (guaNetwork.prefixLength <= 64) else true) && (ulaNetwork.prefixLength <= 64);
       }
     ];
   };
