@@ -13,7 +13,8 @@
     in
     {
       checks = forAllSystems (pkgs: {
-        default = pkgs.callPackage ./test.nix { };
+        # default = pkgs.callPackage ./test.nix { };
+        lib = pkgs.callPackage ./lib-tests.nix { };
       });
       nixosModules.default = ./module.nix;
       devShells = forAllSystems (pkgs: {

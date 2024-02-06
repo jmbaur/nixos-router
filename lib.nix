@@ -24,8 +24,8 @@ rec {
 
   # Parse an IPv6 network address in CIDR form.
   #
-  # Example: parseIpv6Network "2001:db8:ffff::ffff/33"
-  #          => { hextets = [ 8193 3512 32768 0 0 0 0 0 ]; prefixLength = 33; }
+  # Example: parseIpv6Network "2001:db8::/32"
+  #          => { hextets = [ 8193 3512 0 0 0 0 0 0 ]; prefixLength = 32; }
   parseIpv6Network = networkCidr:
     let
       split = lib.splitString "/" networkCidr;
