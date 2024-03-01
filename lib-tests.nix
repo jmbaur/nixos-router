@@ -1,4 +1,4 @@
-{ lib, writeText }:
+{ lib, emptyFile }:
 let
   inherit (import ./lib.nix { inherit lib; })
     leftShift
@@ -38,4 +38,4 @@ let
     }
   ];
 in
-builtins.deepSeq assertions (writeText "success" "")
+builtins.deepSeq assertions emptyFile
