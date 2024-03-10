@@ -7,8 +7,8 @@ buildGoModule rec {
   src = fetchFromGitHub {
     owner = "jmbaur";
     repo = "corerad";
-    rev = "76bf06553757b0d7f51b3784fa3f3774343ba0d9";
-    hash = "sha256-7DXir1zjrCzm7hz/kcImfOs5tT68Je9oorBWMNiJ3wo=";
+    rev = "5545eaa680a4fd1f34d4e7667469a373c978edc7";
+    hash = "sha256-UilbhdtmJjDJt1z2fkHuWfnvj2yWi7EQRZPWaQs6cZI=";
   };
 
   vendorHash = "sha256-EXWRPDfeCuMhKyUalJ09SVfprb6ofigPJkgKfpOJX34=";
