@@ -1,11 +1,11 @@
-{ nixosTest, ... }:
+{ nixosTest, module, ... }:
 let
   host1Mac = "70:ca:6e:62:ab:f6";
 in
 nixosTest {
   name = "router";
   nodes.router = { ... }: {
-    imports = [ ./module.nix ];
+    imports = [ module ];
     virtualisation.vlans = [ 1 ];
     systemd.services.systemd-networkd.environment.SYSTEMD_LOG_LEVEL = "debug";
     router = {

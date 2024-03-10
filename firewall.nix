@@ -32,10 +32,9 @@ in
       "net.ipv6.conf.all.forwarding" = true;
     };
 
-    networking.nat = {
+    networking.jool = {
       enable = true;
-      externalInterface = devWAN;
-      internalInterfaces = [ config.systemd.network.networks.lan.name ];
+      nat64.default.global.pool6 = "64:ff9b::/96";
     };
 
     networking.nftables.enable = true;
@@ -63,6 +62,8 @@ in
       extraForwardRules = ''
         ${bogonInputRules}
         ${bogonOutputRules}
+
+        iifname { ${config.systemd.network.networks.lan.name} } accept
 
         ${lib.optionalString wan6IsHurricaneElectric ''
           # The nixpkgs NAT module sets up forward rules for one external

@@ -13,15 +13,9 @@ in
       networkConfig = {
         DHCPPrefixDelegation = true;
         IPv6AcceptRA = false;
-        DHCPServer = true;
         IgnoreCarrierLoss = true;
-        Address = [ "192.168.1.1/24" cfg.routerIpv6Ula.cidr ] ++
+        Address = [ cfg.routerIpv6Ula.cidr ] ++
           lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
-      };
-      dhcpServerConfig = {
-        EmitDNS = true;
-        DNS = "_server_address";
-        SendOption = [ "15:string:home.arpa" ];
       };
     };
   };

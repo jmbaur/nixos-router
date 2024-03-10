@@ -64,6 +64,7 @@ in
 
         . {
           bind lo ${config.router.lanInterface}
+          dns64 ${config.networking.jool.nat64.default.global.pool6}
           ${lib.optionalString config.router.dns.adblock.enable ''
             hosts ${adblockHosts} {
               reload 0 # the file is read-only, no need to dynamically reload it
