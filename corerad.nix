@@ -2,13 +2,13 @@
 
 buildGoModule rec {
   pname = "corerad";
-  version = "1.2.2";
+  version = "1.3.0";
 
   src = fetchFromGitHub {
-    owner = "jmbaur";
+    owner = "mdlayher";
     repo = "corerad";
-    rev = "d67e179d9809c3402bee3cbd5f78d0fb3b3c7589";
-    hash = "sha256-rmAvz2ANy+uYTnZNc7mOlMOr9JuOJsRukndD66DUmH0=";
+    rev = "v${version}";
+    hash = "sha256-vIKmE9Lq8We7BTMUHIgnOU370ZnNW7YG75WALWdG+4A=";
   };
 
   vendorHash = "sha256-dsqFleXpL8yAcdigqxJsk/Sxvp9OTqbGK3xDEiHkM8A=";
