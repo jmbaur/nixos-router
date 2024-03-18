@@ -16,13 +16,7 @@
         default = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
         lib = pkgs.callPackage ./lib-tests.nix { };
       });
-      nixosModules.default = {
-        nixpkgs.overlays = [ inputs.self.overlays.default ];
-        imports = [ ./module.nix ];
-      };
-      overlays.default = _: prev: {
-        corerad = prev.callPackage ./corerad.nix { };
-      };
+      nixosModules.default = ./module.nix;
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = with pkgs; [
