@@ -177,19 +177,6 @@ in
           The upstream DNS provider to use.
         '';
       };
-      adblock = {
-        enable = mkEnableOption "adblock";
-        categories = mkOption {
-          type = types.listOf (types.enum [ "fakenews" "gambling" "porn" "social" ]);
-          default = [ ];
-          example = literalExpression ''[ "social" ]'';
-          description = mdDoc ''
-            Categories from (stevenblack)[https://github.com/StevenBlack/hosts]
-            to use for adblock. The base category (adware & malware) is always
-            included.
-          '';
-        };
-      };
     };
   };
 

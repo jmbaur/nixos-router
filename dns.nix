@@ -26,14 +26,6 @@ let
       ${ipv6Ula.address} ${name}.home.arpa
     '')
     (builtins.attrValues config.router.hosts);
-
-  adblockHosts = pkgs.runCommand "adblock-hosts.txt" { } (''
-    cat ${pkgs.stevenblack-blocklist}/hosts >$out
-  '' + lib.concatMapStrings
-    (category: ''
-      cat ${pkgs.stevenblack-blocklist}/alternates/${category}-only/hosts >>$out
-    '')
-    (lib.unique config.router.dns.adblock.categories));
 in
 {
   config = lib.mkIf config.router.enable {
@@ -65,12 +57,6 @@ in
         . {
           bind lo ${config.router.lanInterface}
           dns64 ${config.networking.jool.nat64.default.global.pool6}
-          ${lib.optionalString config.router.dns.adblock.enable ''
-            hosts ${adblockHosts} {
-              reload 0 # the file is read-only, no need to dynamically reload it
-              fallthrough
-            }
-          ''}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
             tls_servername ${dnsProvider.serverName}
             policy random
