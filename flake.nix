@@ -17,6 +17,7 @@
         lib = pkgs.callPackage ./lib-tests.nix { };
       });
       nixosModules.default = ./module.nix;
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = with pkgs; [
@@ -28,7 +29,10 @@
           inherit (inputs.pre-commit-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
             src = ./.;
             hooks.deadnix.enable = true;
-            hooks.nixpkgs-fmt.enable = true;
+            hooks.nixfmt = {
+              enable = true;
+              package = pkgs.nixfmt-rfc-style;
+            };
           }) shellHook;
         };
       });
