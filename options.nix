@@ -11,7 +11,8 @@ let
   mkIpv6UlaAddress = _lib.mkIpv6Address ulaNetwork.hextets;
   mkIpv6GuaAddress = _lib.mkIpv6Address guaNetwork.hextets;
 
-  hostType = { name, config, ... }:
+  hostType =
+    { name, config, ... }:
     let
       hostHextets = _lib.hostHexetsFromMacAddress config.mac;
       hostUlaAddress = mkIpv6UlaAddress hostHextets;
@@ -138,9 +139,21 @@ in
       readOnly = true;
       default =
         let
-          address = mkIpv6UlaAddress [ 0 0 0 0 0 0 0 1 ];
+          address = mkIpv6UlaAddress [
+            0
+            0
+            0
+            0
+            0
+            0
+            0
+            1
+          ];
         in
-        { inherit address; cidr = "${address}/${toString ulaNetwork.prefixLength}"; };
+        {
+          inherit address;
+          cidr = "${address}/${toString ulaNetwork.prefixLength}";
+        };
     };
     ipv6GuaPrefix = mkOption {
       type = types.nullOr types.str;
@@ -155,10 +168,22 @@ in
       readOnly = true;
       default =
         let
-          address = mkIpv6GuaAddress [ 0 0 0 0 0 0 0 1 ];
+          address = mkIpv6GuaAddress [
+            0
+            0
+            0
+            0
+            0
+            0
+            0
+            1
+          ];
         in
         if hasStaticGua then
-          { inherit address; cidr = "${address}/${toString guaNetwork.prefixLength}"; }
+          {
+            inherit address;
+            cidr = "${address}/${toString guaNetwork.prefixLength}";
+          }
         else
           null;
     };
@@ -171,7 +196,12 @@ in
     };
     dns = {
       upstreamProvider = mkOption {
-        type = types.enum [ "google" "cloudflare" "quad9" "quad9-ecs" ];
+        type = types.enum [
+          "google"
+          "cloudflare"
+          "quad9"
+          "quad9-ecs"
+        ];
         default = "google";
         description = ''
           The upstream DNS provider to use.
@@ -190,7 +220,8 @@ in
       # smaller than a /64.
       {
         message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
-        assertion = (if hasStaticGua then (guaNetwork.prefixLength <= 64) else true) && (ulaNetwork.prefixLength <= 64);
+        assertion =
+          (if hasStaticGua then (guaNetwork.prefixLength <= 64) else true) && (ulaNetwork.prefixLength <= 64);
       }
     ];
   };

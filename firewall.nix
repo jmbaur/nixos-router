@@ -7,12 +7,10 @@ let
   devWAN6 = if wan6IsHurricaneElectric then heCfg.name else devWAN;
 
   bogonNetworks = lib.mapAttrs (_: routes: map (route: route.routeConfig.Destination) routes) (
-    builtins.partition
-      (route: (builtins.match
-        "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?"
-        route.routeConfig.Destination) != null
-      )
-      config.systemd.network.networks.wan.routes
+    builtins.partition (
+      route:
+      (builtins.match "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?" route.routeConfig.Destination) != null
+    ) config.systemd.network.networks.wan.routes
   );
   v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
   v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;

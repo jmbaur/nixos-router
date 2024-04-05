@@ -14,8 +14,9 @@ in
         DHCPPrefixDelegation = true;
         IPv6AcceptRA = false;
         IgnoreCarrierLoss = true;
-        Address = [ cfg.routerIpv6Ula.cidr ] ++
-          lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
+        Address = [
+          cfg.routerIpv6Ula.cidr
+        ] ++ lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
       };
     };
   };

@@ -5,11 +5,15 @@
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
-  outputs = inputs:
+  outputs =
+    inputs:
     let
-      forAllSystems = f: inputs.nixpkgs.lib.genAttrs
-        [ "x86_64-linux" "aarch64-linux" ]
-        (system: f (import inputs.nixpkgs { inherit system; }));
+      forAllSystems =
+        f:
+        inputs.nixpkgs.lib.genAttrs [
+          "x86_64-linux"
+          "aarch64-linux"
+        ] (system: f (import inputs.nixpkgs { inherit system; }));
     in
     {
       checks = forAllSystems (pkgs: {
@@ -26,14 +30,17 @@
                 ${htmlq}/bin/htmlq "td:first-child" --text
             '')
           ];
-          inherit (inputs.pre-commit-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
-            src = ./.;
-            hooks.deadnix.enable = true;
-            hooks.nixfmt = {
-              enable = true;
-              package = pkgs.nixfmt-rfc-style;
-            };
-          }) shellHook;
+          inherit
+            (inputs.pre-commit-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
+              src = ./.;
+              hooks.deadnix.enable = true;
+              hooks.nixfmt = {
+                enable = true;
+                package = pkgs.nixfmt-rfc-style;
+              };
+            })
+            shellHook
+            ;
         };
       });
     };
