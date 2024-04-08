@@ -2,8 +2,8 @@
   description = "nixos-router";
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
-    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    git-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    git-hooks.url = "github:cachix/git-hooks.nix";
   };
   outputs =
     inputs:
@@ -31,7 +31,7 @@
             '')
           ];
           inherit
-            (inputs.pre-commit-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
+            (inputs.git-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
               src = ./.;
               hooks.deadnix.enable = true;
               hooks.nixfmt = {
