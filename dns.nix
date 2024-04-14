@@ -59,19 +59,19 @@ in
   config = lib.mkIf config.router.enable {
     services.resolved = {
       enable = true;
-      fallbackDns = dnsProvider.servers;
+      fallbackDns = [ ];
+      extraConfig = ''
+        DNS=[::1]:1053
+        DNSStubListenerExtra=::
+      '';
     };
 
-    # Use coredns instance for local resolution.
-    networking.nameservers = [
-      "::1"
-      "127.0.0.1"
-    ];
+    networking.nameservers = [ ];
 
     services.coredns = {
       enable = true;
       config = ''
-        home.arpa {
+        home.arpa:1053 {
           bind ::
           hosts ${pkgs.writeText "home-arpa-hosts.txt" internalDnsEntries} {
             reload 0 # the file is read-only, no need to dynamically reload it
@@ -80,7 +80,7 @@ in
           prometheus :9153
         }
 
-        . {
+        .:1053 {
           bind ::
           dns64 ${config.networking.jool.nat64.default.global.pool6}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
