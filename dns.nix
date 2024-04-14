@@ -68,16 +68,11 @@ in
       "127.0.0.1"
     ];
 
-    # Wait for IP configuration to be done on the interfaces we are binding to,
-    # or else coredns will fail to start.
-    systemd.services.coredns.wants = [ "network-online.target" ];
-    systemd.services.coredns.after = [ "network-online.target" ];
-
     services.coredns = {
       enable = true;
       config = ''
         home.arpa {
-          bind lo ${config.router.lanInterface}
+          bind ::
           hosts ${pkgs.writeText "home-arpa-hosts.txt" internalDnsEntries} {
             reload 0 # the file is read-only, no need to dynamically reload it
           }
@@ -86,7 +81,7 @@ in
         }
 
         . {
-          bind lo ${config.router.lanInterface}
+          bind ::
           dns64 ${config.networking.jool.nat64.default.global.pool6}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
             tls_servername ${dnsProvider.serverName}
