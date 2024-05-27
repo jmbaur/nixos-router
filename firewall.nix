@@ -48,7 +48,6 @@ in
           67 # dhcpv4
           123 # ntp
           5353 # mdns
-          5355 # llmnr
         ];
         allowedTCPPorts = [
           53 # dns
