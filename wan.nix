@@ -38,10 +38,8 @@ let
         if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     };
     routes = map (Destination: {
-      routeConfig = {
-        inherit Destination;
-        Type = "unreachable";
-      };
+      inherit Destination;
+      Type = "unreachable";
     }) bogonNetworks;
   };
 
@@ -53,10 +51,8 @@ let
     };
     linkConfig.RequiredFamilyForOnline = "ipv6";
     routes = map (Destination: {
-      routeConfig = {
-        inherit Destination;
-        Type = "unreachable";
-      };
+      inherit Destination;
+      Type = "unreachable";
     }) bogonNetworks;
   };
 
