@@ -38,7 +38,6 @@ in
 
     networking.firewall = {
       enable = true;
-      pingLimit = "5/second";
       filterForward = true;
 
       interfaces.${config.systemd.network.networks."10-lan".name} = {
