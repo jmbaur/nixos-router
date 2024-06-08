@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, ... }:
 let
   dnsProvider = lib.getAttr config.router.dns.upstreamProvider {
     google = {
@@ -43,17 +38,6 @@ let
       serverName = "dns11.quad9.net";
     };
   };
-
-  internalDnsEntries =
-    ''
-      ${config.router.routerIpv6Ula.address} ${config.networking.hostName}.home.arpa
-    ''
-    + lib.concatMapStrings (
-      { ipv6Ula, name, ... }:
-      ''
-        ${ipv6Ula.address} ${name}.home.arpa
-      ''
-    ) (builtins.attrValues config.router.hosts);
 in
 {
   config = lib.mkIf config.router.enable {
@@ -71,15 +55,6 @@ in
     services.coredns = {
       enable = true;
       config = ''
-        home.arpa:1053 {
-          bind ::
-          hosts ${pkgs.writeText "home-arpa-hosts.txt" internalDnsEntries} {
-            reload 0 # the file is read-only, no need to dynamically reload it
-          }
-          any
-          prometheus :9153
-        }
-
         .:1053 {
           bind ::
           dns64 ${config.networking.jool.nat64.default.global.pool6}

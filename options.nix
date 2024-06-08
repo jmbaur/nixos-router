@@ -6,56 +6,8 @@ let
 
   hasStaticGua = cfg.ipv6GuaPrefix != null;
   guaNetwork = _lib.parseIpv6Network cfg.ipv6GuaPrefix;
-  ulaNetwork = _lib.parseIpv6Network cfg.ipv6UlaPrefix;
 
-  mkIpv6UlaAddress = _lib.mkIpv6Address ulaNetwork.hextets;
   mkIpv6GuaAddress = _lib.mkIpv6Address guaNetwork.hextets;
-
-  hostType =
-    { name, config, ... }:
-    let
-      hostHextets = _lib.hostHexetsFromMacAddress config.mac;
-      hostUlaAddress = mkIpv6UlaAddress hostHextets;
-      hostGuaAddress = mkIpv6GuaAddress hostHextets;
-    in
-    {
-      options = with lib; {
-        name = mkOption {
-          type = types.str;
-          default = name;
-          description = lib.mdDoc ''
-            The name of the host. This will create a DNS entry and the host
-            will be reachable at `<name>.home.arpa`.
-          '';
-        };
-        mac = mkOption {
-          type = types.str;
-          description = ''
-            The hardware MAC address of the host.
-          '';
-        };
-        ipv6Ula = mkOption {
-          internal = true;
-          readOnly = true;
-          default = {
-            address = hostUlaAddress;
-            cidr = "${hostUlaAddress}/${toString ulaNetwork.prefixLength}";
-          };
-        };
-        ipv6Gua = mkOption {
-          internal = true;
-          readOnly = true;
-          default =
-            if hasStaticGua then
-              {
-                address = hostGuaAddress;
-                cidr = "${hostGuaAddress}/${toString guaNetwork.prefixLength}";
-              }
-            else
-              null;
-        };
-      };
-    };
 in
 {
   options.router = with lib; {
@@ -126,35 +78,6 @@ in
         The name of the physical interface that will be used for this network.
       '';
     };
-    ipv6UlaPrefix = mkOption {
-      type = types.str;
-      example = "fd38:5f81:b15d::/64";
-      description = ''
-        The 64-bit IPv6 ULA network prefix (in CIDR notation). You can generate
-        a ULA prefix at https://www.ip-six.de/index.php.
-      '';
-    };
-    routerIpv6Ula = mkOption {
-      internal = true;
-      readOnly = true;
-      default =
-        let
-          address = mkIpv6UlaAddress [
-            0
-            0
-            0
-            0
-            0
-            0
-            0
-            1
-          ];
-        in
-        {
-          inherit address;
-          cidr = "${address}/${toString ulaNetwork.prefixLength}";
-        };
-    };
     ipv6GuaPrefix = mkOption {
       type = types.nullOr types.str;
       example = "2001:db8::1/64";
@@ -187,13 +110,6 @@ in
         else
           null;
     };
-    hosts = mkOption {
-      type = types.attrsOf (types.submodule hostType);
-      default = { };
-      description = ''
-        The hosts in this network.
-      '';
-    };
     dns = {
       upstreamProvider = mkOption {
         type = types.enum [
@@ -219,9 +135,8 @@ in
       # We cannot fit a host's MAC address in an IPv6 address if the network is
       # smaller than a /64.
       {
-        message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
-        assertion =
-          (if hasStaticGua then (guaNetwork.prefixLength <= 64) else true) && (ulaNetwork.prefixLength <= 64);
+        message = "GUA IPv6 network prefix must be greater than or equal to a /64";
+        assertion = hasStaticGua -> (guaNetwork.prefixLength <= 64);
       }
     ];
   };

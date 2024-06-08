@@ -1,38 +1,45 @@
 { nixosTest, module, ... }:
-let
-  host1Mac = "70:ca:6e:62:ab:f6";
-in
 nixosTest {
-  name = "router";
+  name = "nixos-router";
+
   nodes.router = {
     imports = [ module ];
     virtualisation.vlans = [ 1 ];
     router = {
       enable = true;
-      ipv6UlaPrefix = "fdc8:2291:4584::/64";
       wanInterface = "eth0";
       lanInterface = "eth1";
-      hosts.host1.mac = host1Mac;
     };
   };
 
-  nodes.host1 = {
-    virtualisation.vlans = [ 1 ];
-    systemd.network.networks."40-eth1".dhcpV4Config.ClientIdentifier = "mac";
+  nodes.host1 =
+    { lib, ... }:
+    {
+      virtualisation.vlans = [ 1 ];
 
-    # don't use defaults that require internet connectivity
-    services.resolved.fallbackDns = [ ];
+      # don't use defaults that require internet connectivity
+      services.resolved.fallbackDns = [ ];
 
-    networking = {
-      useNetworkd = true;
-      useDHCP = false;
-      firewall.enable = false;
-      interfaces.eth1 = {
-        useDHCP = true;
-        macAddress = host1Mac;
+      networking = {
+        useNetworkd = true;
+        useDHCP = false;
+        firewall.allowedUDPPorts = [ 5353 ];
+        interfaces.eth1 = lib.mkForce { };
+      };
+
+      systemd.network.enable = true;
+      systemd.network.networks."10-eth1" = {
+        name = "eth1";
+        DHCP = "yes";
+        networkConfig.MulticastDNS = true;
       };
     };
-  };
 
-  testScript = builtins.readFile ./test.py;
+  testScript = ''
+    router.wait_for_unit("systemd-networkd.service")
+    host1.wait_for_unit("multi-user.target")
+
+    router.wait_until_succeeds("ping -c 5 host1.local.")
+    host1.wait_until_succeeds("ping -c 5 router.local.")
+  '';
 }
