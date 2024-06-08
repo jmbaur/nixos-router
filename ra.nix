@@ -19,7 +19,6 @@
               advertise = true;
               managed = false;
               other_config = false;
-              dnssl = [ ];
 
               # Advertise all /64 prefixes on the interface.
               prefix = [ { } ];
