@@ -37,10 +37,15 @@ nixosTest {
     };
 
   testScript = ''
-    router.wait_for_unit("systemd-networkd.service")
-    host1.wait_for_unit("multi-user.target")
+    router.wait_for_unit("network-online.target")
+    host1.wait_for_unit("network-online.target")
 
-    router.wait_until_succeeds("ping -c5 host1.local.")
-    host1.wait_until_succeeds("ping -c5 router.local.")
+    print(router.succeed("networkctl status eth1"))
+    print(router.succeed("resolvectl"))
+    print(host1.succeed("networkctl status eth1"))
+    print(host1.succeed("resolvectl"))
+
+    router.wait_until_succeeds("ping -c3 host1.local.")
+    host1.wait_until_succeeds("ping -c3 router.local.")
   '';
 }

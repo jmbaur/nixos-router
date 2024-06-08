@@ -6,7 +6,6 @@
     ./hostapd.nix
     ./lan.nix
     ./options.nix
-    ./ra.nix
     ./wan.nix
   ];
 

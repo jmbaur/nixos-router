@@ -7,9 +7,6 @@ let
   hasStaticGua = cfg.ipv6GuaPrefix != null;
   guaNetwork = _lib.parseIpv6Network cfg.ipv6GuaPrefix;
   ulaNetwork = _lib.parseIpv6Network cfg.ipv6UlaPrefix;
-
-  mkIpv6GuaAddress = _lib.mkIpv6Address guaNetwork.hextets;
-  mkIpv6UlaAddress = _lib.mkIpv6Address ulaNetwork.hextets;
 in
 {
   options.router = with lib; {
@@ -88,30 +85,6 @@ in
         The 64-bit IPv6 GUA network prefix (in CIDR notation).
       '';
     };
-    routerIpv6Gua = mkOption {
-      internal = true;
-      readOnly = true;
-      default =
-        let
-          address = mkIpv6GuaAddress [
-            0
-            0
-            0
-            0
-            0
-            0
-            0
-            1
-          ];
-        in
-        if hasStaticGua then
-          {
-            inherit address;
-            cidr = "${address}/${toString guaNetwork.prefixLength}";
-          }
-        else
-          null;
-    };
     ipv6UlaPrefix = mkOption {
       type = types.str;
       example = "fd38:5f81:b15d::/64";
@@ -119,27 +92,6 @@ in
         The 64-bit IPv6 ULA network prefix (in CIDR notation). You can generate
         a ULA prefix at https://www.ip-six.de/index.php.
       '';
-    };
-    routerIpv6Ula = mkOption {
-      internal = true;
-      readOnly = true;
-      default =
-        let
-          address = mkIpv6UlaAddress [
-            0
-            0
-            0
-            0
-            0
-            0
-            0
-            1
-          ];
-        in
-        {
-          inherit address;
-          cidr = "${address}/${toString ulaNetwork.prefixLength}";
-        };
     };
     dns = {
       upstreamProvider = mkOption {

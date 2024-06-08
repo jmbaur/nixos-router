@@ -13,12 +13,32 @@ in
       networkConfig = {
         DHCPPrefixDelegation = true;
         IPv6AcceptRA = false;
+        IPv6SendRA = true;
         IgnoreCarrierLoss = true;
         MulticastDNS = true;
-        Address = [
-          cfg.routerIpv6Ula.cidr
-        ] ++ lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
       };
+      ipv6SendRAConfig = {
+        EmitDNS = true;
+        DNS = "_link_local";
+      };
+      ipv6Prefixes =
+        [
+          {
+            Prefix = cfg.ipv6UlaPrefix;
+            Assign = true;
+          }
+        ]
+        ++ lib.optionals (cfg.ipv6GuaPrefix != null) [
+          {
+            Prefix = cfg.ipv6GuaPrefix;
+            Assign = true;
+          }
+        ];
+      # TODO(jared): make nixos option
+      extraConfig = ''
+        [IPv6PREF64Prefix]
+        Prefix=${config.networking.jool.nat64.default.global.pool6}
+      '';
     };
   };
 }
