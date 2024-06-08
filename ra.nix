@@ -19,7 +19,7 @@
               advertise = true;
               managed = false;
               other_config = false;
-              dnssl = [ { domain_names = [ "home.arpa" ]; } ];
+              dnssl = [ ];
 
               # Advertise all /64 prefixes on the interface.
               prefix = [ { } ];
