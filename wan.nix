@@ -16,7 +16,7 @@ let
         IPv6AcceptRA = if config.router.wanSupportsDHCPv6 then "yes" else "no";
       }
       // (lib.optionalAttrs wan6IsHurricaneElectric {
-        Tunnel = config.systemd.network.netdevs.hurricane.netdevConfig.Name;
+        Tunnel = config.systemd.network.netdevs."10-hurricane".netdevConfig.Name;
       });
     dhcpV4Config = {
       UseDNS = false;
@@ -72,13 +72,14 @@ in
 {
   config = lib.mkIf config.router.enable {
     services.avahi.denyInterfaces = [
-      config.systemd.network.networks.wan.name
-    ] ++ (lib.optional wan6IsHurricaneElectric config.systemd.network.networks.hurricane.name);
+      config.systemd.network.networks."10-wan".name
+    ] ++ (lib.optional wan6IsHurricaneElectric config.systemd.network.networks."10-hurricane".name);
 
     systemd.network.networks = {
-      inherit wan;
-    } // lib.optionalAttrs wan6IsHurricaneElectric { inherit hurricane; };
+      "10-wan" = wan;
+      "10-hurricane" = lib.mkIf wan6IsHurricaneElectric hurricane;
+    };
 
-    systemd.network.netdevs = lib.mkIf wan6IsHurricaneElectric { hurricane = hurricaneNetdev; };
+    systemd.network.netdevs."10-hurricane" = lib.mkIf wan6IsHurricaneElectric hurricaneNetdev;
   };
 }

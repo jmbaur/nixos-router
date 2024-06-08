@@ -3,13 +3,13 @@ let
   heCfg = config.router.heTunnelBroker;
   wan6IsHurricaneElectric = heCfg.enable;
 
-  devWAN = config.systemd.network.networks.wan.name;
+  devWAN = config.systemd.network.networks."10-wan".name;
   devWAN6 = if wan6IsHurricaneElectric then heCfg.name else devWAN;
 
   bogonNetworks = lib.mapAttrs (_: routes: map (route: route.Destination) routes) (
     builtins.partition (
       route: (builtins.match "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?" route.Destination) != null
-    ) config.systemd.network.networks.wan.routes
+    ) config.systemd.network.networks."10-wan".routes
   );
   v4BogonNetworks = lib.concatStringsSep ", " bogonNetworks.right;
   v6BogonNetworks = lib.concatStringsSep ", " bogonNetworks.wrong;
@@ -41,7 +41,7 @@ in
       pingLimit = "5/second";
       filterForward = true;
 
-      interfaces.${config.systemd.network.networks.lan.name} = {
+      interfaces.${config.systemd.network.networks."10-lan".name} = {
         allowedUDPPorts = [
           53 # dns
           67 # dhcpv4
@@ -61,7 +61,7 @@ in
         ${bogonInputRules}
         ${bogonOutputRules}
 
-        iifname { ${config.systemd.network.networks.lan.name} } accept
+        iifname { ${config.systemd.network.networks."10-lan".name} } accept
 
         ${lib.optionalString wan6IsHurricaneElectric ''
           # The nixpkgs NAT module sets up forward rules for one external

@@ -4,7 +4,7 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    systemd.network.networks.lan = {
+    systemd.network.networks."10-lan" = {
       name = cfg.lanInterface;
       linkConfig = {
         ActivationPolicy = "always-up";

@@ -10,12 +10,12 @@
         };
         interfaces =
           (lib.optional config.router.wanSupportsDHCPv6 {
-            name = config.systemd.network.networks.wan.name;
+            name = config.systemd.network.networks."10-wan".name;
             monitor = true;
           })
           ++ [
             {
-              name = config.systemd.network.networks.lan.name;
+              name = config.systemd.network.networks."10-lan".name;
               advertise = true;
               managed = false;
               other_config = false;
