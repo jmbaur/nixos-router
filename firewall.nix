@@ -53,9 +53,7 @@ in
         ];
       };
 
-      extraInputRules = ''
-        ${bogonInputRules}
-      '';
+      extraInputRules = bogonInputRules;
 
       extraForwardRules = ''
         ${bogonInputRules}

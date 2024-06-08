@@ -7,6 +7,7 @@ nixosTest {
     virtualisation.vlans = [ 1 ];
     router = {
       enable = true;
+      ipv6UlaPrefix = "fdc8:2291:4584::/64";
       wanInterface = "eth0";
       lanInterface = "eth1";
     };
@@ -39,7 +40,7 @@ nixosTest {
     router.wait_for_unit("systemd-networkd.service")
     host1.wait_for_unit("multi-user.target")
 
-    router.wait_until_succeeds("ping -c 5 host1.local.")
-    host1.wait_until_succeeds("ping -c 5 router.local.")
+    router.wait_until_succeeds("ping -c5 host1.local.")
+    host1.wait_until_succeeds("ping -c5 router.local.")
   '';
 }

@@ -15,7 +15,9 @@ in
         IPv6AcceptRA = false;
         IgnoreCarrierLoss = true;
         MulticastDNS = true;
-        Address = lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
+        Address = [
+          cfg.routerIpv6Ula.cidr
+        ] ++ lib.optional (cfg.ipv6GuaPrefix != null) cfg.routerIpv6Gua.cidr;
       };
     };
   };

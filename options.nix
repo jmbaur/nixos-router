@@ -6,8 +6,10 @@ let
 
   hasStaticGua = cfg.ipv6GuaPrefix != null;
   guaNetwork = _lib.parseIpv6Network cfg.ipv6GuaPrefix;
+  ulaNetwork = _lib.parseIpv6Network cfg.ipv6UlaPrefix;
 
   mkIpv6GuaAddress = _lib.mkIpv6Address guaNetwork.hextets;
+  mkIpv6UlaAddress = _lib.mkIpv6Address ulaNetwork.hextets;
 in
 {
   options.router = with lib; {
@@ -110,6 +112,35 @@ in
         else
           null;
     };
+    ipv6UlaPrefix = mkOption {
+      type = types.str;
+      example = "fd38:5f81:b15d::/64";
+      description = ''
+        The 64-bit IPv6 ULA network prefix (in CIDR notation). You can generate
+        a ULA prefix at https://www.ip-six.de/index.php.
+      '';
+    };
+    routerIpv6Ula = mkOption {
+      internal = true;
+      readOnly = true;
+      default =
+        let
+          address = mkIpv6UlaAddress [
+            0
+            0
+            0
+            0
+            0
+            0
+            0
+            1
+          ];
+        in
+        {
+          inherit address;
+          cidr = "${address}/${toString ulaNetwork.prefixLength}";
+        };
+    };
     dns = {
       upstreamProvider = mkOption {
         type = types.enum [
@@ -132,11 +163,11 @@ in
         message = "Cannot set IPv6 GUA prefix and use DHCPv6 on the wan interface";
         assertion = (cfg.ipv6GuaPrefix != null) != cfg.wanSupportsDHCPv6;
       }
-      # We cannot fit a host's MAC address in an IPv6 address if the network is
-      # smaller than a /64.
       {
-        message = "GUA IPv6 network prefix must be greater than or equal to a /64";
-        assertion = hasStaticGua -> (guaNetwork.prefixLength <= 64);
+        # We cannot fit a host's MAC address in an IPv6 address if the network
+        # is smaller than a /64.
+        message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
+        assertion = (hasStaticGua -> (guaNetwork.prefixLength <= 64)) && (ulaNetwork.prefixLength <= 64);
       }
     ];
   };
