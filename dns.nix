@@ -45,8 +45,8 @@ in
       enable = true;
       fallbackDns = [ ];
       extraConfig = ''
-        DNS=[::1]:1053
-        DNSStubListenerExtra=::
+        DNS=[::1]:53
+        DNSStubListener=no
       '';
     };
 
@@ -55,7 +55,7 @@ in
     services.coredns = {
       enable = true;
       config = ''
-        .:1053 {
+        .:53 {
           bind ::
           dns64 ${config.networking.jool.nat64.default.global.pool6}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
