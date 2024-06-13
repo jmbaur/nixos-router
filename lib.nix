@@ -16,7 +16,7 @@ let
 
   toNetworkHexString = num: lib.toLower (lib.toHexString num);
 
-  toHextetString = hextetNum: lib.fixedWidthString 4 "0" (toNetworkHexString hextetNum);
+  toHextetString = hextetNum: lib.fixedWidthNumber 4 (toNetworkHexString hextetNum);
 in
 rec {
   inherit leftShift;
