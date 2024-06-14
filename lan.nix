@@ -21,6 +21,7 @@ in
         EmitDNS = true;
         DNS = "_link_local";
       };
+      ipv6PREF64Prefixes = [ { Prefix = config.networking.jool.nat64.default.global.pool6; } ];
       ipv6Prefixes =
         [
           {
@@ -34,11 +35,6 @@ in
             Assign = true;
           }
         ];
-      # TODO(jared): make nixos option
-      extraConfig = ''
-        [IPv6PREF64Prefix]
-        Prefix=${config.networking.jool.nat64.default.global.pool6}
-      '';
     };
   };
 }
