@@ -25,8 +25,8 @@ in
 {
   config = lib.mkIf config.router.enable {
     boot.kernel.sysctl = {
-      "net.ipv4.conf.all.forwarding" = true;
-      "net.ipv6.conf.all.forwarding" = true;
+      "net.ipv4.conf.all.forwarding" = 1;
+      "net.ipv6.conf.all.forwarding" = 1;
     };
 
     networking.jool = {
