@@ -34,10 +34,7 @@
             (inputs.git-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
               src = ./.;
               hooks.deadnix.enable = true;
-              hooks.nixfmt = {
-                enable = true;
-                package = pkgs.nixfmt-rfc-style;
-              };
+              hooks.nixfmt-rfc-style.enable = true;
             })
             shellHook
             ;
