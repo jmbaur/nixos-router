@@ -1,6 +1,8 @@
 { config, lib, ... }:
 let
-  dnsProvider = lib.getAttr config.router.dns.upstreamProvider {
+  cfg = config.router;
+
+  dnsProvider = lib.getAttr cfg.dns.upstreamProvider {
     google = {
       servers = [
         "8.8.8.8"
@@ -40,7 +42,7 @@ let
   };
 in
 {
-  config = lib.mkIf config.router.enable {
+  config = lib.mkIf cfg.enable {
     services.resolved = {
       enable = true;
       fallbackDns = [ ];
@@ -50,14 +52,14 @@ in
       '';
     };
 
-    networking.nameservers = [ ];
-
     services.coredns = {
       enable = true;
       config = ''
         .:53 {
           bind ::
-          dns64 ${config.networking.jool.nat64.default.global.pool6}
+          ${lib.optionalString cfg.ipv6Only ''
+            dns64 ${config.networking.jool.nat64.default.global.pool6}
+          ''}
           forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
             tls_servername ${dnsProvider.serverName}
             policy random

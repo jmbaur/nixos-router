@@ -1,6 +1,8 @@
 { config, lib, ... }:
 let
-  heCfg = config.router.heTunnelBroker;
+  cfg = config.router;
+
+  heCfg = cfg.heTunnelBroker;
   wan6IsHurricaneElectric = heCfg.enable;
 
   devWAN = config.systemd.network.networks."10-wan".name;
@@ -23,13 +25,13 @@ let
   '';
 in
 {
-  config = lib.mkIf config.router.enable {
+  config = lib.mkIf cfg.enable {
     boot.kernel.sysctl = {
       "net.ipv4.conf.all.forwarding" = 1;
       "net.ipv6.conf.all.forwarding" = 1;
     };
 
-    networking.jool = {
+    networking.jool = lib.mkIf cfg.ipv6Only {
       enable = true;
       nat64.default.global.pool6 = "64:ff9b::/96";
     };

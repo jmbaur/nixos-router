@@ -11,12 +11,16 @@ in
 {
   options.router = with lib; {
     enable = mkEnableOption "nixos router";
+
+    ipv6Only = mkEnableOption "IPv6-only LAN";
+
     wanInterface = mkOption {
       type = types.str;
       description = ''
         The name of the WAN interface.
       '';
     };
+
     wanSupportsDHCPv6 = mkOption {
       type = types.bool;
       default = true;
@@ -24,6 +28,7 @@ in
         Enable dhcpv6 on the WAN interface.
       '';
     };
+
     wan6PrefixHint = mkOption {
       type = types.int;
       default = 56;
@@ -32,8 +37,10 @@ in
         prefix delegation.
       '';
     };
+
     heTunnelBroker = {
       enable = mkEnableOption "Hurricane Electric TunnelBroker node";
+
       name = mkOption {
         type = types.str;
         default = "hurricane";
@@ -41,6 +48,7 @@ in
           The name of the SIT netdev.
         '';
       };
+
       mtu = mkOption {
         type = types.number;
         default = 1480;
@@ -48,6 +56,7 @@ in
           The MTU of the SIT netdev.
         '';
       };
+
       serverIPv4Address = mkOption {
         type = types.str;
         example = "192.0.2.1";
@@ -55,6 +64,7 @@ in
           The IPv4 address of the tunnel broker server.
         '';
       };
+
       serverIPv6Address = mkOption {
         type = types.str;
         example = "2001:db8::1";
@@ -62,6 +72,7 @@ in
           The IPv6 address of the tunnel broker server.
         '';
       };
+
       clientIPv6Address = mkOption {
         type = types.str;
         example = "2001:db8::2/64";
@@ -71,12 +82,14 @@ in
         '';
       };
     };
+
     lanInterface = mkOption {
       type = types.str;
       description = ''
         The name of the physical interface that will be used for this network.
       '';
     };
+
     ipv6GuaPrefix = mkOption {
       type = types.nullOr types.str;
       example = "2001:db8::1/64";
@@ -85,6 +98,7 @@ in
         The 64-bit IPv6 GUA network prefix (in CIDR notation).
       '';
     };
+
     ipv6UlaPrefix = mkOption {
       type = types.str;
       example = "fd38:5f81:b15d::/64";
@@ -93,6 +107,7 @@ in
         a ULA prefix at https://www.ip-six.de/index.php.
       '';
     };
+
     dns = {
       upstreamProvider = mkOption {
         type = types.enum [
