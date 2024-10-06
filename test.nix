@@ -7,7 +7,6 @@ nixosTest {
     virtualisation.vlans = [ 1 ];
     router = {
       enable = true;
-      ipv6UlaPrefix = "fdc8:2291:4584::/64";
       wanInterface = "eth0";
       lanInterface = "eth1";
     };

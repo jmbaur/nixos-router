@@ -2,24 +2,69 @@
   lib ? (import <nixpkgs> { }).lib,
 }:
 let
-  leftShift = num: n: if n == 0 then num else leftShift (num * 2) (n - 1);
+  inherit (builtins)
+    bitAnd
+    bitOr
+    bitXor
+    elemAt
+    genList
+    hashString
+    head
+    substring
+    tail
+    ;
 
-  hexChars = lib.stringToCharacters "0123456789abcdef";
+  inherit (lib)
+    concatMapStringsSep
+    findFirst
+    fixedWidthNumber
+    flatten
+    flip
+    foldl
+    length
+    min
+    mod
+    optional
+    range
+    splitString
+    stringToCharacters
+    sublist
+    toHexString
+    toInt
+    toLower
+    zipLists
+    zipListsWith
+    ;
+
+  power' =
+    product: base: exp:
+    if exp == 0 then product else power' (product * base) base (exp - 1);
+
+  power = power' 1;
+
+  leftShift = flip power' 2;
+
+  hexChars = stringToCharacters "0123456789abcdef";
 
   # Return an integer between 0 and 15 representing the hex digit
   fromHexDigit =
-    c:
-    (lib.findFirst (x: x.fst == c) c (lib.zipLists hexChars (lib.range 0 (lib.length hexChars - 1))))
-    .snd;
+    c: (findFirst (x: x.fst == c) c (zipLists hexChars (range 0 (length hexChars - 1)))).snd;
 
-  fromHex = s: lib.foldl (a: b: a * 16 + fromHexDigit b) 0 (lib.stringToCharacters (lib.toLower s));
+  fromHex = s: foldl (a: b: a * 16 + fromHexDigit b) 0 (stringToCharacters (toLower s));
 
-  toNetworkHexString = num: lib.toLower (lib.toHexString num);
+  toNetworkHexString = num: toLower (toHexString num);
 
-  toHextetString = hextetNum: lib.fixedWidthNumber 4 (toNetworkHexString hextetNum);
+  toHextetString = hextetNum: fixedWidthNumber 4 (toNetworkHexString hextetNum);
 in
 rec {
-  inherit leftShift;
+  inherit leftShift power;
+
+  generateHextets =
+    value:
+    let
+      hash = hashString "sha256" value;
+    in
+    genList (x: fromHex (substring x 4 hash)) 8;
 
   # Parse an IPv6 network address in CIDR form.
   #
@@ -28,34 +73,32 @@ rec {
   parseIpv6Network =
     networkCidr:
     let
-      split = lib.splitString "/" networkCidr;
+      split = splitString "/" networkCidr;
 
-      prefixLength = lib.toInt (lib.elemAt split 1);
+      prefixLength = toInt (elemAt split 1);
 
-      unfilledHextets = map (lib.splitString ":") (lib.splitString "::" (lib.elemAt split 0));
+      unfilledHextets = map (splitString ":") (splitString "::" (elemAt split 0));
 
-      numNeededHextets = lib.foldl (sum: xs: sum + lib.length xs) 0 unfilledHextets;
+      numNeededHextets = foldl (sum: xs: sum + length xs) 0 unfilledHextets;
 
-      unmodifiedHextets = lib.flatten [
-        (map fromHex (lib.elemAt unfilledHextets 0))
-        (builtins.genList (_: 0) numNeededHextets)
-        (map fromHex (lib.elemAt unfilledHextets 1))
+      unmodifiedHextets = flatten [
+        (map fromHex (elemAt unfilledHextets 0))
+        (genList (_: 0) numNeededHextets)
+        (map fromHex (elemAt unfilledHextets 1))
       ];
 
-      fullHextets = lib.sublist 0 (prefixLength / 16) unmodifiedHextets;
+      fullHextets = sublist 0 (prefixLength / 16) unmodifiedHextets;
 
-      nextHextetBits = lib.mod prefixLength 16;
+      nextHextetBits = mod prefixLength 16;
 
-      partialHextet = lib.optional (nextHextetBits != 0) (
-        lib.bitAnd (lib.elemAt unmodifiedHextets (lib.length fullHextets)) (
+      partialHextet = optional (nextHextetBits != 0) (
+        bitAnd (elemAt unmodifiedHextets (length fullHextets)) (
           leftShift ((leftShift 1 nextHextetBits) - 1) (16 - nextHextetBits)
         )
       );
 
       hextets =
-        fullHextets
-        ++ partialHextet
-        ++ builtins.genList (_: 0) (8 - (lib.length fullHextets) - (lib.length partialHextet));
+        fullHextets ++ partialHextet ++ genList (_: 0) (8 - (length fullHextets) - (length partialHextet));
     in
     {
       inherit prefixLength hextets;
@@ -67,9 +110,9 @@ rec {
   #          => "2001:0db8:0000:0000:0000:0000:0000:0001"
   mkIpv6Address =
     networkHextets: hostHextets:
-    assert lib.length networkHextets == 8;
-    assert lib.length hostHextets == 8;
-    lib.concatMapStringsSep ":" toHextetString (lib.zipListsWith lib.bitOr networkHextets hostHextets);
+    assert length networkHextets == 8;
+    assert length hostHextets == 8;
+    concatMapStringsSep ":" toHextetString (zipListsWith bitOr networkHextets hostHextets);
 
   # Generates the hextets of an IPv6 address with the last 64 bits populated
   # based on the host's MAC address.
@@ -82,16 +125,63 @@ rec {
       ff = fromHex "ff";
       fe = fromHex "fe";
 
-      macNums = map fromHex (lib.splitString ":" macAddress);
+      macNums = map fromHex (splitString ":" macAddress);
 
-      mkHextet = upper: lower: lib.bitOr (leftShift upper 8) lower;
+      mkHextet = upper: lower: bitOr (leftShift upper 8) lower;
     in
-    assert lib.length macNums == 6; # ensure the MAC address is the correct length
-    (builtins.genList (_: 0) 4)
+    assert length macNums == 6; # ensure the MAC address is the correct length
+    (genList (_: 0) 4)
     ++ [
-      (mkHextet (builtins.bitXor (builtins.elemAt macNums 0) 2) (builtins.elemAt macNums 1))
-      (mkHextet (builtins.elemAt macNums 2) ff)
-      (mkHextet fe (builtins.elemAt macNums 3))
-      (mkHextet (builtins.elemAt macNums 4) (builtins.elemAt macNums 5))
+      (mkHextet (bitXor (elemAt macNums 0) 2) (elemAt macNums 1))
+      (mkHextet (elemAt macNums 2) ff)
+      (mkHextet fe (elemAt macNums 3))
+      (mkHextet (elemAt macNums 4) (elemAt macNums 5))
     ];
+
+  # Generate a list of hextets for a network address from a prefix length.
+  #
+  # Example: networkMaskHextets 64
+  #          => [ 65535 65535 65535 65535 0 0 0 0 ]
+  networkMaskHextets =
+    let
+      networkMaskHextets' =
+        hextets: bits:
+        let
+          bits' = bits - 16;
+        in
+        if bits' < 0 then
+          hextets ++ genList (_: 0) (8 - length hextets)
+        else
+          networkMaskHextets' (
+            hextets
+            ++ [
+              ((leftShift 1 (min 16 bits)) - 1)
+            ]
+          ) bits';
+    in
+    networkMaskHextets' [ ];
+
+  # A ULA address is any address in the fc00::/7 network.
+  mkUlaNetwork =
+    hextets: prefixLength:
+    let
+      firstHextet = fromHex "fc00";
+
+      firstHextet' = (
+        bitOr firstHextet (
+          # take the last 9 bits of the first hextet
+          bitAnd 511 (head hextets)
+        )
+      );
+
+      hextets' = [ firstHextet' ] ++ (sublist 0 7 (tail hextets));
+
+      address = mkIpv6Address (
+        # This isn't entirely necessary, but makes the address look normal in
+        # config files.
+        zipListsWith bitAnd hextets' (networkMaskHextets prefixLength)
+      ) (genList (_: 0) 8);
+    in
+    assert length hextets == 8;
+    "${address}/${toString prefixLength}";
 }

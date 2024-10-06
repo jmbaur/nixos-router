@@ -1,16 +1,65 @@
 { lib, emptyFile }:
 let
   inherit (import ./lib.nix { inherit lib; })
-    leftShift
-    parseIpv6Network
-    mkIpv6Address
     hostHexetsFromMacAddress
+    leftShift
+    mkIpv6Address
+    mkUlaNetwork
+    networkMaskHextets
+    parseIpv6Network
+    power
     ;
 
   assertions = map ({ assertion, message }: lib.assertMsg assertion message) [
     {
+      assertion = power 2 2 == 4;
+      message = "pow(2, 2) == 4";
+    }
+    {
       assertion = leftShift 1 8 == 256;
       message = "1<<8 == 256";
+    }
+    {
+      assertion =
+        networkMaskHextets 64 == [
+          65535
+          65535
+          65535
+          65535
+          0
+          0
+          0
+          0
+        ];
+      message = "simple network mask";
+    }
+    {
+      assertion =
+        mkUlaNetwork [
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+        ] 64 == "fc00:0000:0000:0000:0000:0000:0000:0000/64";
+      message = "simple ULA network";
+    }
+    {
+      assertion =
+        mkUlaNetwork [
+          65535
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+        ] 64 == "fdff:0000:0000:0000:0000:0000:0000:0000/64";
+      message = "less simple ULA network";
     }
     {
       assertion =

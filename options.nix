@@ -2,11 +2,15 @@
 let
   cfg = config.router;
 
-  _lib = import ./lib.nix { inherit lib; };
+  inherit (import ./lib.nix { inherit lib; })
+    generateHextets
+    mkUlaNetwork
+    parseIpv6Network
+    ;
 
   hasStaticGua = cfg.ipv6GuaPrefix != null;
-  guaNetwork = _lib.parseIpv6Network cfg.ipv6GuaPrefix;
-  ulaNetwork = _lib.parseIpv6Network cfg.ipv6UlaPrefix;
+  guaNetwork = parseIpv6Network cfg.ipv6GuaPrefix;
+  ulaNetwork = parseIpv6Network cfg.ipv6UlaPrefix;
 in
 {
   options.router = with lib; {
@@ -100,11 +104,12 @@ in
     };
 
     ipv6UlaPrefix = mkOption {
+      internal = true;
+      readOnly = true;
       type = types.str;
       example = "fd38:5f81:b15d::/64";
       description = ''
-        The 64-bit IPv6 ULA network prefix (in CIDR notation). You can generate
-        a ULA prefix at https://www.ip-six.de/index.php.
+        The 64-bit IPv6 ULA network prefix (in CIDR notation).
       '';
     };
 
@@ -137,5 +142,7 @@ in
         assertion = (hasStaticGua -> (guaNetwork.prefixLength <= 64)) && (ulaNetwork.prefixLength <= 64);
       }
     ];
+
+    router.ipv6UlaPrefix = mkUlaNetwork (generateHextets config.networking.hostName) 64;
   };
 }
