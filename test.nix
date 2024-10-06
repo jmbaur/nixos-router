@@ -41,6 +41,7 @@ nixosTest {
 
     print(router.succeed("networkctl status eth1"))
     print(router.succeed("resolvectl"))
+    print(router.succeed("nft list ruleset"))
     print(host1.succeed("networkctl status eth1"))
     print(host1.succeed("resolvectl"))
 

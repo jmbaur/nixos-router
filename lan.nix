@@ -32,12 +32,12 @@ in
           # We want the LAN interface to be configured regardless of carrier
           # state.
           ConfigureWithoutCarrier = true;
-
         }
 
         # Only setup a DHCPv4 server if we aren't using an IPv6 only LAN.
         (lib.mkIf (!cfg.ipv6Only) {
           DHCPServer = true;
+          IPMasquerade = "ipv4";
           Address = "192.168.0.1/24";
         })
       ];
