@@ -182,6 +182,7 @@ rec {
         zipListsWith bitAnd hextets' (networkMaskHextets prefixLength)
       ) (genList (_: 0) 8);
     in
+    assert prefixLength >= 7;
     assert length hextets == 8;
     "${address}/${toString prefixLength}";
 }
