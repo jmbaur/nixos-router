@@ -7,13 +7,8 @@ in
     systemd.network.networks."10-lan" = {
       name = cfg.lanInterface;
 
-      linkConfig = {
-        # TODO(jared): the default value of "up" is probably sufficient.
-        ActivationPolicy = "always-up";
-
-        # TODO(jared): This should probably only be true for the WAN.
-        RequiredForOnline = true;
-      };
+      # LAN link not required for the machine to be considered "online".
+      linkConfig.RequiredForOnline = false;
 
       networkConfig = lib.mkMerge [
         {
