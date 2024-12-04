@@ -37,6 +37,11 @@ in
         })
       ];
 
+      dhcpServerConfig = lib.mkIf (!cfg.ipv6Only) {
+        EmitDNS = true;
+        DNS = "_server_address";
+      };
+
       ipv6SendRAConfig = {
         EmitDNS = true;
         DNS = "_link_local";
