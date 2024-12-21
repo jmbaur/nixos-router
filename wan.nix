@@ -37,7 +37,7 @@ let
     ];
     dhcpV4Config = mkMerge [
       commonDHCP
-      (mkIf (config.time.timeZone != null) { useTimezone = false; })
+      (mkIf (config.time.timeZone != null) { UseTimezone = false; })
     ];
     dhcpV6Config = (
       mkIf config.router.wanSupportsDHCPv6 (mkMerge [
