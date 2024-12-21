@@ -8,12 +8,19 @@ let
     parseIpv6Network
     ;
 
+  inherit (lib)
+    mkDefault
+    mkEnableOption
+    mkOption
+    types
+    ;
+
   hasStaticGua = cfg.ipv6GuaPrefix != null;
   guaNetwork = parseIpv6Network cfg.ipv6GuaPrefix;
   ulaNetwork = parseIpv6Network cfg.ipv6UlaPrefix;
 in
 {
-  options.router = with lib; {
+  options.router = {
     enable = mkEnableOption "nixos router";
 
     ipv6Only = mkEnableOption "IPv6-only LAN";
@@ -143,6 +150,6 @@ in
       }
     ];
 
-    router.ipv6UlaPrefix = mkUlaNetwork (generateHextets config.networking.hostName) 64;
+    router.ipv6UlaPrefix = mkDefault (mkUlaNetwork (generateHextets config.networking.hostName) 64);
   };
 }
