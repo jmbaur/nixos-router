@@ -11,6 +11,7 @@ let
   inherit (lib)
     mkDefault
     mkEnableOption
+    mkIf
     mkOption
     types
     ;
@@ -136,7 +137,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = mkIf cfg.enable {
     assertions = [
       {
         message = "Cannot set IPv6 GUA prefix and use DHCPv6 on the wan interface";
