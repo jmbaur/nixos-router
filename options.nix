@@ -16,7 +16,6 @@ let
     types
     ;
 
-  hasStaticGua = cfg.ipv6GuaPrefix != null;
   guaNetwork = parseIpv6Network cfg.ipv6GuaPrefix;
   ulaNetwork = parseIpv6Network cfg.ipv6UlaPrefix;
 in
@@ -37,7 +36,7 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Enable dhcpv6 on the WAN interface.
+        Enable DHCPv6 on the WAN interface.
       '';
     };
 
@@ -140,14 +139,11 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        message = "Cannot set IPv6 GUA prefix and use DHCPv6 on the wan interface";
-        assertion = (cfg.ipv6GuaPrefix != null) != cfg.wanSupportsDHCPv6;
-      }
-      {
         # We cannot fit a host's MAC address in an IPv6 address if the network
         # is smaller than a /64.
         message = "ULA and GUA IPv6 network prefix must be greater than or equal to a /64";
-        assertion = (hasStaticGua -> (guaNetwork.prefixLength <= 64)) && (ulaNetwork.prefixLength <= 64);
+        assertion =
+          (cfg.ipv6GuaPrefix != null -> (guaNetwork.prefixLength <= 64)) && (ulaNetwork.prefixLength <= 64);
       }
     ];
 
