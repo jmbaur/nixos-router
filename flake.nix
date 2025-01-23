@@ -26,7 +26,7 @@
         default = pkgs.mkShell {
           packages = with pkgs; [
             (writeShellScriptBin "get-bogon-networks" ''
-              ${curl}/bin/curl --silent https://ipgeolocation.io/resources/bogon.html |
+              ${curl}/bin/curl --silent --location https://ipgeolocation.io/blog/bogon-ip-addresses |
                 ${htmlq}/bin/htmlq "td:first-child" --text
             '')
           ];
