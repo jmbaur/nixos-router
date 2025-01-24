@@ -1,4 +1,10 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
 let
   cfg = config.router;
 
@@ -148,5 +154,7 @@ in
     ];
 
     router.ipv6UlaPrefix = mkDefault (mkUlaNetwork (generateHextets config.networking.hostName) 64);
+
+    environment.systemPackages = [ pkgs.conntrack-tools ];
   };
 }
