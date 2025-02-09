@@ -55,10 +55,12 @@ let
       RequiredFamilyForOnline =
         if (wan6IsHurricaneElectric || !config.router.wanSupportsDHCPv6) then "ipv4" else "any";
     };
-    routes = map (Destination: {
-      inherit Destination;
-      Type = "unreachable";
-    }) bogonNetworks;
+    routes = mkIf config.router.blockBogonNetworks (
+      map (Destination: {
+        inherit Destination;
+        Type = "unreachable";
+      }) bogonNetworks
+    );
   };
 
   hurricane = {
@@ -68,10 +70,12 @@ let
       Gateway = heCfg.serverIPv6Address;
     };
     linkConfig.RequiredFamilyForOnline = "ipv6";
-    routes = map (Destination: {
-      inherit Destination;
-      Type = "unreachable";
-    }) bogonNetworks;
+    routes = mkIf config.router.blockBogonNetworks (
+      map (Destination: {
+        inherit Destination;
+        Type = "unreachable";
+      }) bogonNetworks
+    );
   };
 
   hurricaneNetdev = {

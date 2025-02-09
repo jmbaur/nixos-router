@@ -54,21 +54,24 @@ in
         ];
       };
 
-      extraInputRules = bogonInputRules;
+      extraInputRules = lib.mkIf config.router.blockBogonNetworks bogonInputRules;
 
-      extraForwardRules = ''
-        ${bogonInputRules}
-        ${bogonOutputRules}
+      extraForwardRules =
+        lib.optionalString config.router.blockBogonNetworks ''
+          ${bogonInputRules}
+          ${bogonOutputRules}
+        ''
+        + ''
 
-        iifname { ${config.systemd.network.networks."10-lan".name} } accept
+          iifname { ${config.systemd.network.networks."10-lan".name} } accept
 
-        ${lib.optionalString wan6IsHurricaneElectric ''
-          # The nixpkgs NAT module sets up forward rules for one external
-          # interface. Make sure it is setup here for a hurricane electric
-          # tunnel interface.
-          iifname { ${lib.concatStringsSep ", " config.networking.nat.internalInterfaces} } oifname ${devWAN6} accept
-        ''}
-      '';
+          ${lib.optionalString wan6IsHurricaneElectric ''
+            # The nixpkgs NAT module sets up forward rules for one external
+            # interface. Make sure it is setup here for a hurricane electric
+            # tunnel interface.
+            iifname { ${lib.concatStringsSep ", " config.networking.nat.internalInterfaces} } oifname ${devWAN6} accept
+          ''}
+        '';
     };
   };
 }

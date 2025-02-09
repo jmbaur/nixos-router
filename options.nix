@@ -55,6 +55,10 @@ in
       '';
     };
 
+    blockBogonNetworks = mkEnableOption "block bogon networks" // {
+      default = true;
+    };
+
     heTunnelBroker = {
       enable = mkEnableOption "Hurricane Electric TunnelBroker node";
 
