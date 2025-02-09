@@ -46,7 +46,6 @@ in
         allowedUDPPorts = [
           53 # dns
           67 # dhcpv4
-          123 # ntp
           5353 # mdns
         ];
         allowedTCPPorts = [
