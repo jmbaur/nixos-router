@@ -36,8 +36,8 @@ nixosTest {
     };
 
   testScript = ''
-    router.wait_for_unit("network-online.target")
-    host1.wait_for_unit("network-online.target")
+    router.wait_for_unit("network.target")
+    host1.wait_for_unit("network.target")
 
     print(router.succeed("networkctl status eth1"))
     print(router.succeed("resolvectl"))
