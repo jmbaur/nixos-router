@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.router;
 
@@ -52,24 +57,29 @@ in
       '';
     };
 
-    services.coredns = {
+    services.knot-resolver = {
       enable = true;
-      config = ''
-        .:53 {
-          bind ::
-          ${lib.optionalString cfg.ipv6Only ''
-            dns64 ${config.networking.jool.nat64.default.global.pool6}
-          ''}
-          forward . ${toString (map (ip: "tls://${ip}") dnsProvider.servers)} {
-            tls_servername ${dnsProvider.serverName}
-            policy random
-            health_check 5s
+      managerPackage = pkgs.knot-resolver-manager_6;
+      package = pkgs.knot-resolver_6;
+      settings = {
+        network.listen = [ { interface = "::"; } ];
+        dns64 = lib.mkIf cfg.ipv6Only {
+          enable = true;
+          prefix = config.networking.jool.nat64.default.global.pool6;
+        };
+        forward = [
+          {
+            subtree = ".";
+            servers = [
+              {
+                address = dnsProvider.servers;
+                transport = "tls";
+                hostname = dnsProvider.serverName;
+              }
+            ];
           }
-          errors
-          cache 30
-          prometheus :9153
-        }
-      '';
+        ];
+      };
     };
   };
 }
