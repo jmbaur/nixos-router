@@ -1,9 +1,9 @@
-{ nixosTest, module, ... }:
-nixosTest {
+{ testers }:
+testers.nixosTest {
   name = "nixos-router";
 
   nodes.router = {
-    imports = [ module ];
+    imports = [ ./module.nix ];
     virtualisation.vlans = [ 1 ];
     router = {
       enable = true;

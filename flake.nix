@@ -17,7 +17,7 @@
     in
     {
       checks = forAllSystems (pkgs: {
-        default = pkgs.callPackage ./test.nix { module = inputs.self.nixosModules.default; };
+        default = pkgs.callPackage ./test.nix { };
         lib = pkgs.callPackage ./lib-tests.nix { };
       });
       nixosModules.default = ./module.nix;
