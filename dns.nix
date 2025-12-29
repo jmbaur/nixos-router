@@ -60,7 +60,6 @@ in
     services.knot-resolver = {
       enable = true;
       managerPackage = pkgs.knot-resolver-manager_6;
-      package = pkgs.knot-resolver_6;
       settings = {
         network.listen = [ { interface = "::"; } ];
         dns64 = lib.mkIf cfg.ipv6Only {
