@@ -18,7 +18,7 @@ testers.nixosTest {
       virtualisation.vlans = [ 1 ];
 
       # don't use defaults that require internet connectivity
-      services.resolved.fallbackDns = [ ];
+      services.resolved.settings.Resolve.FallbackDns = lib.mkForce [ ];
 
       networking = {
         useNetworkd = true;

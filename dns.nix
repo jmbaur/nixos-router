@@ -50,11 +50,11 @@ in
   config = lib.mkIf cfg.enable {
     services.resolved = {
       enable = true;
-      fallbackDns = [ ];
-      extraConfig = ''
-        DNS=[::1]:53
-        DNSStubListener=no
-      '';
+      settings.Resolve = {
+        DNS = [ "[::1]:53" ];
+        DNSStubListener = false;
+        FallbackDNS = lib.mkForce [ ];
+      };
     };
 
     services.knot-resolver = {
