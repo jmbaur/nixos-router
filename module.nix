@@ -3,7 +3,6 @@
   imports = [
     ./dns.nix
     ./firewall.nix
-    ./hostapd.nix
     ./lan.nix
     ./options.nix
     ./wan.nix
