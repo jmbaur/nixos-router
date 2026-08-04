@@ -36,6 +36,8 @@ testers.nixosTest {
     };
 
   testScript = ''
+    start_all()
+
     router.wait_for_unit("network.target")
     host1.wait_for_unit("network.target")
 

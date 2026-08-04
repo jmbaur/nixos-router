@@ -10,36 +10,34 @@ in
       # LAN link not required for the machine to be considered "online".
       linkConfig.RequiredForOnline = false;
 
-      networkConfig = lib.mkMerge [
-        {
-          # Delegate prefixes found from DHCPv6 clients on other links.
-          DHCPPrefixDelegation = true;
+      networkConfig = {
+        # Delegate prefixes found from DHCPv6 clients on other links.
+        DHCPPrefixDelegation = true;
 
-          # We are a router, we don't accept router advertisements on this link.
-          IPv6AcceptRA = false;
+        # We are a router, we don't accept router advertisements on this link.
+        IPv6AcceptRA = false;
 
-          # Advertise that we are a router on the link to clients on the LAN.
-          IPv6SendRA = true;
+        # Advertise that we are a router on the link to clients on the LAN.
+        IPv6SendRA = true;
 
-          # Allow mDNS to work on the LAN.
-          MulticastDNS = true;
+        # Allow mDNS to work on the LAN.
+        MulticastDNS = true;
 
-          # We want the LAN interface to be configured regardless of carrier
-          # state.
-          ConfigureWithoutCarrier = true;
-        }
+        # We want the LAN interface to be configured regardless of carrier
+        # state.
+        ConfigureWithoutCarrier = true;
 
-        # Only setup a DHCPv4 server if we aren't using an IPv6 only LAN.
-        (lib.mkIf (!cfg.ipv6Mostly) {
-          DHCPServer = true;
-          IPMasquerade = "ipv4";
-          Address = "192.168.0.1/24";
-        })
-      ];
+        # Setup a DHCPv4 server, DHCP option 108 is set below when using an
+        # IPv6 mostly setup.
+        DHCPServer = true;
+        IPMasquerade = "ipv4";
+        Address = "192.168.0.1/24";
+      };
 
-      dhcpServerConfig = lib.mkIf (!cfg.ipv6Mostly) {
+      dhcpServerConfig = {
         EmitDNS = true;
         DNS = "_server_address";
+        IPv6OnlyPreferredSec = lib.mkIf cfg.ipv6Mostly "1d";
       };
 
       ipv6SendRAConfig = {
