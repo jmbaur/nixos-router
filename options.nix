@@ -19,6 +19,7 @@ let
     mkEnableOption
     mkIf
     mkOption
+    mkRenamedOptionModule
     types
     ;
 
@@ -26,10 +27,12 @@ let
   ulaNetwork = parseIpv6Network cfg.ipv6UlaPrefix;
 in
 {
+  imports = [ (mkRenamedOptionModule [ "router" "ipv6Only" ] [ "router" "ipv6Mostly" ]) ];
+
   options.router = {
     enable = mkEnableOption "nixos router";
 
-    ipv6Only = mkEnableOption "IPv6-only LAN";
+    ipv6Mostly = mkEnableOption "IPv6-only LAN";
 
     wanInterface = mkOption {
       type = types.str;

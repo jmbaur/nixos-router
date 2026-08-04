@@ -62,7 +62,7 @@ in
       managerPackage = pkgs.knot-resolver-manager_6;
       settings = {
         network.listen = [ { interface = "::"; } ];
-        dns64 = lib.mkIf cfg.ipv6Only {
+        dns64 = lib.mkIf cfg.ipv6Mostly {
           enable = true;
           prefix = config.networking.jool.nat64.default.global.pool6;
         };

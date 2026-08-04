@@ -31,7 +31,7 @@ in
       "net.ipv6.conf.all.forwarding" = 1;
     };
 
-    networking.jool = lib.mkIf cfg.ipv6Only {
+    networking.jool = lib.mkIf cfg.ipv6Mostly {
       enable = true;
       nat64.default.global.pool6 = "64:ff9b::/96";
     };

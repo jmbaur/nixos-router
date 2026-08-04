@@ -30,14 +30,14 @@ in
         }
 
         # Only setup a DHCPv4 server if we aren't using an IPv6 only LAN.
-        (lib.mkIf (!cfg.ipv6Only) {
+        (lib.mkIf (!cfg.ipv6Mostly) {
           DHCPServer = true;
           IPMasquerade = "ipv4";
           Address = "192.168.0.1/24";
         })
       ];
 
-      dhcpServerConfig = lib.mkIf (!cfg.ipv6Only) {
+      dhcpServerConfig = lib.mkIf (!cfg.ipv6Mostly) {
         EmitDNS = true;
         DNS = "_server_address";
       };
@@ -47,23 +47,22 @@ in
         DNS = "_link_local";
       };
 
-      ipv6PREF64Prefixes = lib.optionals cfg.ipv6Only [
+      ipv6PREF64Prefixes = lib.optionals cfg.ipv6Mostly [
         { Prefix = config.networking.jool.nat64.default.global.pool6; }
       ];
 
-      ipv6Prefixes =
-        [
-          {
-            Prefix = cfg.ipv6UlaPrefix;
-            Assign = true;
-          }
-        ]
-        ++ lib.optionals (cfg.ipv6GuaPrefix != null) [
-          {
-            Prefix = cfg.ipv6GuaPrefix;
-            Assign = true;
-          }
-        ];
+      ipv6Prefixes = [
+        {
+          Prefix = cfg.ipv6UlaPrefix;
+          Assign = true;
+        }
+      ]
+      ++ lib.optionals (cfg.ipv6GuaPrefix != null) [
+        {
+          Prefix = cfg.ipv6GuaPrefix;
+          Assign = true;
+        }
+      ];
     };
   };
 }
